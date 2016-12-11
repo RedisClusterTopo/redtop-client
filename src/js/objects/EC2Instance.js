@@ -2,50 +2,50 @@
 
 class EC2Instance {
 
-  constructor(){
-    this.id = null;
-    this.ip = null;
-    this.nodes = [];
-  }
-
-  addNode(n){
-    this.nodes.forEach(function(node){
-      if(node.getHost() == n.getHost() && node.getPort() == n.getPort()){
-        return;
-      }
-    });
-    this.nodes.push(n);
-  }
-
-  delNode(n){
-    if(typeof(n) == "string"){
-      this.nodes.forEach(function(node, i){
-        if(node.getHost() == n.getHost())
-          this.nodes.slice(i, i+1);
-      });
+    constructor(){
+        this.id = null;
+        this.ip = null;
+        this.nodes = [];
     }
-    else if (typeof(n) == "number"){
-      this.nodes.slice(n, n+1);
+
+    addNode(n){
+        this.nodes.forEach(function(node){
+            if(node.getHost() == n.getHost() && node.getPort() == n.getPort()){
+                return;
+            }
+        });
+        this.nodes.push(n);
     }
-  }
 
-  setId(i){
-    this.id = i;
-  }
+    delNode(n){
+        if(typeof(n) == "string"){
+            this.nodes.forEach(function(node, i){
+                if(node.getHost() == n.getHost())
+                this.nodes.slice(i, i+1);
+            });
+        }
+        else if (typeof(n) == "number"){
+            this.nodes.slice(n, n+1);
+        }
+    }
 
-  getId(){
-    return this.id;
-  }
+    setId(i){
+        this.id = i;
+    }
 
-  setIp(ip){
-    this.ip = ip;
-  }
+    getId(){
+        return this.id;
+    }
 
-  getIp(){
-    return this.ip;
-  }
+    setIp(ip){
+        this.ip = ip;
+    }
 
-  getNodes(){
-    return this.nodes;
-  }
+    getIp(){
+        return this.ip;
+    }
+
+    getNodes(){
+        return this.nodes;
+    }
 }
