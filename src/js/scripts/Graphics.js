@@ -52,7 +52,7 @@ function generate_topo(data){
 
 	//Clear the html body
 	$('p').empty();
-	
+
 	//Re-parse the data into d3-acceptable format
 	reformat(data, function(d3_data){
 		//  assigns the data to a hierarchy using parent-child relationships
