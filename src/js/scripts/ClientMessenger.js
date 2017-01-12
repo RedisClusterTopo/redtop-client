@@ -27,6 +27,15 @@ $(document).ready(function () {
 
     });
 
+    socket.on('topo init test', function(){
+        //generate redtop object
+        var generator = new ClusterGen();
+
+        generator.generate(function(newCluster) {
+            generate_topo(newCluster)
+        });
+    });
+
 
     //Update to topology state is received
     socket.on('topo update', function(topo_data){
@@ -38,7 +47,13 @@ $(document).ready(function () {
 
     });
 
-    //Error is received from the server
+    socket.on('client not found', function(){
+        window.alert("Client ID not found. Returning to tag entry page");
+        location.href = 'http://localhost:8080';
+    });
+
+
+    //Error is received from the server (Dev purposes only)
     socket.on('err', function(e){
         console.log(e);
     });

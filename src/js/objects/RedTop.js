@@ -164,7 +164,7 @@ class RedTop {
             var nets = this.getSubnets();
             nets.forEach(function(net){
                 net.getInstances().forEach(function(inst){
-                    val.push(inst);
+                    instances.push(inst);
                 })
             });
             return instances;
@@ -173,17 +173,13 @@ class RedTop {
 
     getNodes(i, sn, az){
         if(arguments.length == 3){
-            this.getInstances().forEach(function(inst){
-                if(inst.getId() == i.getId()){
-                    return inst.get
-                }
-            });
+            //Get nodes at specified instance
         }
         else if (arguments.length == 2){
-
+            //Get nodes in specified subnet
         }
         else if (arguments.length == 1){
-
+            //get nodes in specified az
         }
         else{
             var nodes = [];
@@ -193,6 +189,30 @@ class RedTop {
                     nodes.push(n);
                 });
             });
+
+            return nodes;
         }
+    }
+
+    getSlaves(){
+        var s = [];
+
+        this.getNodes().forEach(function(node){
+            if (node.getRole().toUpperCase() == "SLAVE")
+                s.push(node);
+        });
+
+        return s;
+    }
+
+    getMasters(){
+        var m = [];
+
+        this.getNodes().forEach(function(node){
+            if (node.getRole().toUpperCase() == "MASTER")
+                m.push(node);
+        });
+
+        return m;
     }
 };

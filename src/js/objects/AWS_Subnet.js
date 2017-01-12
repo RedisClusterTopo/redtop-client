@@ -2,7 +2,8 @@
 
 class AWS_Subnet{
     constructor(){
-        this.netid = null
+        this.netid = null;
+        this.type = "Subnet";
         this.instances = [];
     }
 
@@ -28,7 +29,7 @@ class AWS_Subnet{
         }
     }
 
-    setNetId(i){
+    setNetID(i){
         this.netid = i;
     }
 

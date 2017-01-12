@@ -5,6 +5,7 @@ function parse(topo_data, done){
     //Object to parse data into
     var t = new RedTop();
 
+    console.log(topo_data);
 
     topo_data.forEach(function(inst, i){
 
@@ -15,7 +16,7 @@ function parse(topo_data, done){
 
 
         var sn = new AWS_Subnet();
-        sn.setNetId(inst.SubnetId);
+        sn.setNetID(inst.SubnetId);
         t.addSubnet(sn, az);
 
         var i = new EC2Instance();
@@ -27,7 +28,7 @@ function parse(topo_data, done){
         inst.Tags.forEach(function(ta){
             if(ta.Key == "master" || ta.Key == "slave"){
                 var n = new ClusterNode();
-                n.setType(ta.Key);
+                n.setRole(ta.Key);
                 n.setHost(i.getIp());
                 n.setPort(ta.Value);
                 t.addNode(n, i, sn, az);

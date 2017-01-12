@@ -5,6 +5,7 @@ class EC2Instance {
     constructor(){
         this.id = null;
         this.ip = null;
+        this.type = "EC2 Instance"
         this.nodes = [];
     }
 

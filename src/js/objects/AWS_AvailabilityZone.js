@@ -3,6 +3,7 @@
 class AWS_AvailabilityZone {
     constructor(){
         this.name = null;
+        this.type = "Availability Zone"
         this.subnets = [];
     }
 
@@ -13,7 +14,7 @@ class AWS_AvailabilityZone {
         });
         this.subnets.push(s);
     }
-    
+
     delSubnet(s){
         if(typeof(s) == "string"){
             this.subnets.forEach(function(sn, i){
