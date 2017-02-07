@@ -1,107 +1,112 @@
-"use strict";
+'use strict'
 
-class ClusterNode {
+module.exports = class ClusterNode {
 
-    constructor(){
-        this.host = null;
-        this.port = null;
-        this.role = null;
-        this.type = "Cluster Node";
-        this.replicates = null;
-        this.hash = []; //Array of objects with start and end hash slots to handle
-        //Nodes which serve a non-contiguous hash range
-        this.slaves = [];
-    }
+  constructor () {
+    this.host = null  // The host EC2 instance IP
+    this.port = null  // The port this node is running over
+    this.role = null  // Master or slave
+    this.type = 'Cluster Node'
+    this.replicates = null  // The master this node replicates if this.role == slave
+    this.hash = [] // Array of objects with start and end hash slots to handle
+    // Nodes which serve a non-contiguous hash range
+    this.slaves = []  // Array of slave ClusterNode objects associated with this
+                      // if this this.role == master
+  }
 
-    addHash(range){
-        this.hash.forEach(function(r){
-            if(r.upper == range.upper && r.lower == range.lower) return false;
-        });
+  addHash (range) {
+    this.hash.forEach(function (r) {
+      if (r.upper === range.upper && r.lower === range.lower) return false
+    })
 
-        this.hash.push(range);
-    }
+    this.hash.push(range)
+  }
 
-    delHash(range){
-        var _this = this,
-            success = false;
-            
-        this.hash.forEach(function(r, index){
-            if(r.upper == range.upper && r.lower == range.lower) {
-                _this.hash.slice(index, index+1);
-                success = true;
-            }
-        });
+  delHash (range) {
+    var _this = this
+    var success = false
 
-        return success;
-    }
+    this.hash.forEach(function (r, index) {
+      if (r.upper === range.upper && r.lower === range.lower) {
+        _this.hash.slice(index, index + 1)
+        success = true
+      }
+    })
 
-    getRole(){
-        return this.role;
-    }
+    return success
+  }
 
-    setRole(r){
-        this.role = r;
-    }
+  getRole () {
+    return this.role
+  }
 
-    addSlave(s){
-        if(this.type == 'master'){
-            if(s){
-                this.slaves.forEach(function(slave){
-                    if(slave != s){
-                        this.slaves.push(s);
-                    }
-                });
-            }
-            else {
-                return;
-            }
+  setRole (r) {
+    this.role = r
+  }
+
+  addSlave (newSlave) {
+    if (this.role.toUpperCase() === 'MASTER') {
+      if (newSlave) {
+        var found = false
+
+        this.slaves.forEach(function (slave) {
+          if (newSlave === slave) {
+            found = true
+          }
+        })
+
+        if (!found) {
+          this.slaves.push(newSlave)
         }
+      }
+    } else {
+      return
     }
+  }
 
-    delSlave(s){
-        if(this.type == 'master'){
-            if(s){
-                this.slaves.forEach(function(slave, i){
-                    this.slaves.splice(i, 1);
-                });
-            }
-            else{
-                return;
-            }
-        }
+  delSlave (s) {
+    if (this.role.toUpperCase() === 'MASTER') {
+      if (s) {
+        this.slaves.forEach(function (slave, i) {
+          this.slaves.splice(i, 1)
+        })
+      } else {
+        return
+      }
     }
+  }
 
-    getSlaves(){
-        if(this.type == 'master'){
-            return this.slaves;
-        }
+  getSlaves () {
+    if (this.role.toUpperCase() === 'MASTER') {
+      return this.slaves
     }
+  }
 
-    getPort(){
-        return this.port;
-    }
+  getPort () {
+    return this.port
+  }
 
-    getReplicates(){
-        if(this.type == 'slave'){
-            return this.replicates;
-        }
+  getReplicates () {
+    if (this.role.toUpperCase() === 'SLAVE') {
+      return this.replicates
     }
+  }
 
-    getHost(){
-        return this.host;
-    }
+  getHost () {
+    return this.host
+  }
 
-    setHost(h){
-        this.host = h;
-    }
+  setHost (h) {
+    this.host = h
+  }
 
-    setPort(p){
-        this.port = p;
-    }
+  setPort (p) {
+    this.port = p
+  }
 
-    setReplicates(r){
-        if(this.type == 'slave'){
-            this.replicates = r;
-        }
+  setReplicates (r) {
+    if (this.role.toUpperCase() === 'SLAVE') {
+      this.replicates = r
     }
+  }
 }

@@ -1,135 +1,144 @@
-//Min/max possible children to add at each possible node during generation
-var min= 1,
-    max = 6;
+// Min/max possible children to add at each possible node during generation
+var min = 1
+var max = 4
 
-class ClusterGen {
-    constructor(){
+var RedTop = require('RedTop.js')
+var AwsAvailabilityZone = require('AwsAvailabilityZone.js')
+var AwsSubnet = require('AwsSubnet.js')
+var Ec2Instance = require('Ec2Instance.js')
+var ClusterNode = require('ClusterNode.js')
+
+module.exports = class ClusterGen {
+  generate (cb) {
+    var r = new RedTop()
+    var _this = this
+
+    var i
+    for (i = 0; i < randomNum(min, max); i++) {
+      var newAZ = _this.genAZ()
+      r.addAvailabilityZone(newAZ)
     }
 
-    generate(cb) {
-        var r = new RedTop();
-        var _this = this;
+    r.getAvailabilityZones().forEach(function (az) {
+      for (var i = 0; i < randomNum(min, max); i++) {
+        var newSubnet = _this.genSubnet(az)
 
+        for (var j = 0; j < randomNum(min, max); j++) {
+          var newInst = _this.genInstance(newSubnet, az)
 
-        for (var i = 0; i < randomNum(min, max); i++){
-            var newAZ = _this.genAZ();
-            r.addAvailabilityZone(newAZ);
+          for (var k = 0; k < randomNum(min, max); k++) {
+            var newNode = _this.genNode(newInst, newSubnet, az)
+            newInst.addNode(newNode)
+          }
+          newSubnet.addInstance(newInst)
         }
+        az.addSubnet(newSubnet)
+      }
 
-        r.getAvailabilityZones().forEach(function(az){
-            for (var i = 0; i < randomNum(min, max); i++){
-                var newSubnet = _this.genSubnet(az);
+      r.addAvailabilityZone(az)
+    })
 
-                for (var j = 0; j < randomNum(min, max); j++){
-                    var newInst = _this.genInstance(newSubnet, az);
+    this.fixReplication(r, function (r) {
+      _this.fixHash(r, function (r) {
 
-                    for (var k = 0; j < randomNum(min, max);j++){
-                        var newNode = _this.genNode(newInst, newSubnet, az);
-                        newInst.addNode(newNode);
-                    }
-                    newSubnet.addInstance(newInst);
-                }
-                az.addSubnet(newSubnet);
-            }
+      })
+    })
 
-            r.addAvailabilityZone(az);
-        });
+    cb(r)
+  }
 
-        this.fixHash(r, function(r){
-            this.fixReplication(r, function(r){
+  fixHash (r, cb) {
+    // Assign each master node an equal share of the hash values
+    var rangeMax = 16384
+    var increment = Math.round(rangeMax / r.getNodes().length)
+    var curHash = 0
 
-            });
-        });
+    r.getMasters().forEach(function (node) {
+      var range = {}
+      range.lower = curHash
+      range.upper = curHash + increment
 
+      curHash += increment
+      if (curHash > 16384) curHash = 16384
 
-        cb(r);
-    }
+      node.addHash(range)
+    })
 
+    r.getSlaves().forEach(function (node) {
+      node.hash = node.replicates.hash
+    })
 
-    fixHash(r){
-        //Assign each master node an equal share of the hash values
-        var rangeMax = 16384,
-            increment = Math.round(rangeMax / r.getNodes().length),
-            curHash = 0;
+    cb(r)
+  }
 
+  fixReplication (r, cb) {
+    var masters = r.getMasters()
+    var l = masters.length
 
-        r.getMasters().forEach(function(node){
-            var range = new Object();
-            range.lower = curHash;
-            range.upper = curHash + increment;
+    r.getSlaves().forEach(function (node) {
+      if (node) {
+        var randomMaster = masters[randomNum(0, l - 1)]
+        node.setReplicates(randomMaster)
+        randomMaster.addSlave(node)
+      }
+    })
 
-            curHash += increment;
-            if(curHash > 16384) curHash = 16384;
+    cb(r)
+  }
 
-            node.addHash(range);
-        });
-    }
+  genAZ () {
+    var az = new AwsAvailabilityZone()
 
-    fixReplication(r, cb){
-        //for each slave
-        //  select all masters
-        //  pick random master
-        //      add replicates to slaves
-        //      add slave to master's list of slaves
-        //      Update slave hash slot range
+    az.setName(randomID())
 
-        cb(r);
-    }
+    return az
+  }
 
-    genAZ(){
-        var az = new AWS_AvailabilityZone();
+  genSubnet () {
+    var s = new AwsSubnet()
 
-        az.setName(randomID());
+    s.setNetID(randomID())
 
-        return az;
-    }
+    return s
+  }
 
-    genSubnet(){
-        var s = new AWS_Subnet();
+  genInstance () {
+    var inst = new Ec2Instance()
 
-        s.setNetID(randomID());
+    inst.setId(randomID())
+    inst.setIp(randomIP())
 
-        return s;
-    }
+    return inst
+  }
 
-    genInstance(){
-        var inst = new EC2Instance();
+  genNode (inst) {
+    var n = new ClusterNode()
 
-        inst.setId(randomID());
-        inst.setIp(randomIP());
+    n.setHost(inst.getIp())
+    n.setPort(randomNum(7000, 12000))
 
-        return inst;
-    }
+    if (Math.random() > 0.75) n.setRole('Master')
+    else n.setRole('Slave')
 
-    genNode(inst){
-        var n = new ClusterNode();
-
-        n.setHost(inst.getIp());
-        n.setPort(randomNum(7000, 12000));
-
-        if(randomNum(0, 1) == 0) n.setRole("Master");
-        else n.setRole("Slave");
-
-
-        return n;
-    }
+    return n
+  }
 }
 
-function randomIP(){
-    var ip = "";
+function randomIP () {
+  var ip = ''
 
-    for(var i = 0; i < 4; i++){
-        ip += randomNum(1, 255).toString();
-        if (i < 3) ip += ".";
-    }
+  for (var i = 0; i < 4; i++) {
+    ip += randomNum(1, 255).toString()
+    if (i < 3) ip += '.'
+  }
 
-    return ip;
+  return ip
 }
 
-function randomNum(min, max){
-    return Math.round(Math.random() * (max - min) + min);
+function randomNum (min, max) {
+  return Math.round(Math.random() * (max - min) + min)
 }
 
-function randomID(){
-    return Math.random().toString(36).replace(/[^a-z]+/g, '').substr(0, 10);;
+function randomID () {
+  return Math.random().toString(36).replace(/[^a-z]+/g, '').substr(0, 10)
 }

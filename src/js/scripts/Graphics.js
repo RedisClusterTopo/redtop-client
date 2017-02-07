@@ -1,205 +1,239 @@
-//code to allow the svg elements to be draggable
-var selectedElement = 0;
-var currentX = 0;
-var currentY = 0;
-var currentMatrix = 0;
+var d3 = require('d3')
+var $ = window.$
+var leftInfoBar = require('./InfoBar.js')
 
-$(document).ready(function(){
-	// Close the dropdown if the user clicks outside of it
-	window.onclick = function(event) {
-		if (!event.target.matches('.dropbtn')) {
+module.exports = class Graphics {
+  constructor () {
+    var _this = this
 
-			var dropdowns = document.getElementsByClassName("dropdown-content");
-			var i;
-			for (i = 0; i < dropdowns.length; i++) {
-				var openDropdown = dropdowns[i];
-				if (openDropdown.classList.contains('show')) {
-					openDropdown.classList.remove('show');
-				}
-			}
-		}
-	}
-});
+    _this.d3_nodes = null
+    _this.links = null
 
+    _this.margin = {top: 40, right: 90, bottom: 50, left: 90}
 
-//===========================Graphics statics================================//
+    _this.width = window.innerWidth - _this.margin.left - _this.margin.right - (window.innerWidth / 12)
 
-// set the dimensions and margins of the diagram
-var margin = {top: 40, right: 90, bottom: 50, left: 90},
-width = window.innerWidth - margin.left - margin.right - (window.innerWidth / 12),
-height = window.innerHeight- margin.top - margin.bottom - (window.innerWidth / 12);
+    _this.height = window.innerHeight - _this.margin.top - _this.margin.bottom - (window.innerWidth / 12)
 
-// declares a tree layout and assigns the size
-var treemap = d3.tree()
-.size([width, height]);
+    _this.treemap = d3.tree()
+    .size([_this.width, _this.height - 100])
 
-var x = d3.scaleLinear()
-.domain([-1, width + 1])
-.range([-1, width + 1]);
+    _this.x_scale = d3.scaleLinear()
+    .domain([-1, _this.width + 1])
+    .range([-1, _this.width + 1])
 
-var y = d3.scaleLinear()
-.domain([-1, height + 1])
-.range([-1, height + 1]);
+    _this.y_scale = d3.scaleLinear()
+    .domain([-1, _this.height - 100])
+    .range([-1, _this.height - 100])
 
-var svg;
-var g;
+    _this.focus = {
+      node: null,
+      replication: []
+    }
+  }
 
+  generate (data) {
+    var _this = this
+    // Clear the html body
+    $('p.topology').empty()
 
-// MAIN GRAPHICS FUNCTION CALL
-function generate_topo(data){
+    reformat(data, function (d3Data) {
+      _this.d3_nodes = d3.hierarchy(d3Data)
 
-	svg = null;
-	g = null;
+      _this.d3_nodes = _this.treemap(_this.d3_nodes)
 
-	//Clear the html body
-	$('p').empty();
+      // The main SVG canvas
+      _this.svg = d3.select('p.topology').append('svg')
+      .attr('width', _this.width + _this.margin.left + _this.margin.right)
+      .attr('height', _this.height + _this.margin.top + _this.margin.bottom)
 
-	//Re-parse the data into d3-acceptable format
-	reformat(data, function(d3_data){
-		//  assigns the data to a hierarchy using parent-child relationships
-		var nodes = d3.hierarchy(d3_data);
+      _this.g = _this.svg.append('g')
+      .attr('transform', 'translate(' + _this.margin.left + ',' + _this.margin.top + ')')
 
-		d3.treemap().padding(50);
+      _this.addLinks()
+      _this.addNodes()
+      _this.addNodeShape()
+      _this.addNodeText()
+    })
+  }
 
-		// maps the node data to the tree layout
-		nodes = treemap(nodes);
+  addLinks () {
+    var _this = this
 
-		console.log();
+    _this.links = _this.g.selectAll('.link')
+    .data(_this.d3_nodes.descendants().slice(1))
+    .enter().append('path')
+    .attr('class', 'link')
+    .attr('d', function (d) {
+      // console.log(d)
+      return 'M' + d.x + ',' + d.y +
+      'C' + d.x + ',' + (d.y + d.parent.y) / 2 +
+      ' ' + d.parent.x + ',' + (d.y + d.parent.y) / 2 +
+      ' ' + d.parent.x + ',' + d.parent.y
+    })
+  }
 
-		// append the svg obgect to the body of the page
-		// appends a 'group' element to 'svg'
-		// moves the 'group' element to the top left margin
-		svg = d3.select("p.topology").append("svg")
-		.attr("width", width + margin.left + margin.right)
-		.attr("height", height + margin.top + margin.bottom);
-		g = svg.append("g")
-		.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+  addNodes () {
+    var _this = this
 
-		// adds the links between the nodes
-		var link = g.selectAll(".link")
-		.data( nodes.descendants().slice(1))
-		.enter().append("path")
-		.attr("class", "link")
-		.attr("d", function(d) {
-			return "M" + d.x  + "," + d.y
-			+ "C" + d.x + "," + (d.y + d.parent.y) / 2
-			+ " " + d.parent.x + "," +  (d.y + d.parent.y) / 2
-			+ " " + d.parent.x + "," + d.parent.y;
-		});
+    _this.node = _this.g.selectAll('.node')
+    .data(_this.d3_nodes.descendants())
+    .enter().append('g')
+    .attr('class', function (d) {
+      return 'node' +
+      (d.children ? ' node--internal' : ' node--leaf')
+    })
+    .attr('transform', function (d) {
+      return 'translate(' + d.x + ',' + d.y + ')'
+    })
+      .on('click', function () { _this.selectNode(this, d3.select(this).datum().data) })
 
-		// adds each node as a group
-		var node = g.selectAll(".node")
-		.data(nodes.descendants())
-		.enter().append("g")
-		.attr("class", function(d) {
-			return "node" +
-			(d.children ? " node--internal" : " node--leaf"); })
-		.attr("transform", function(d) {
-			return "translate(" + d.x  + "," + d.y  + ")"; })
-		.on("click", function(){selectNode(this, d3.select(this).datum().data)});
+    console.log(_this.node)
+  }
 
+  addNodeShape () {
+    var _this = this
 
-		//Append square to master nodes, circles to all others
-		node._groups[0].forEach(function(n){
-			if(d3.select(n).datum().data.role == "Master") {
-				d3.select(n).append("rect")
-					.attr('x', -10)
-					.attr('y', -10)
-					.attr('width', 20)
-					.attr('height', 20);
-			}
-			else {
-				d3.select(n).append("circle")
-					.attr("r", 10);
+    _this.node._groups[0].forEach(function (n) {
+      if (d3.select(n).datum().data.role === 'Master') {
+        d3.select(n).append('rect')
+        .attr('x', -10)
+        .attr('y', -10)
+        .attr('width', 20)
+        .attr('height', 20)
+      } else {
+        d3.select(n).append('circle')
+        .attr('r', 10)
+      }
+    })
+  }
 
-			}
+  addNodeText () {
+    var _this = this
 
-		});
+    _this.node.append('text')
+    .attr('dy', '.4em')
+    .attr('y', function (d) { return d.children ? -20 : 20 })
+    .style('text-anchor', 'middle')
+    .style('fill', 'grey')
+    .text(function (d) { return d.data.name })
+  }
 
+  selectNode (node, nodeData) {
+    // Don't select cluster root
+    if (nodeData.name === 'Cluster root') return
 
-		// adds the text to the node
-		node.append("text")
-		.attr("dy", ".4em")
-		.attr("y", function(d) { return d.children ? -20 : 20; })
-		.style("text-anchor", "middle")
-		.style("fill", "grey")
-		.text(function(d) { return d.data.name; });
+    // Collapse sidebar and remove focus if node is already clicked
+    if (this.focus.node === node) {
+      $('#leftMenuBtn')[0].click()
+      this._removeFocus()
+      return
+    }
 
-		// Uncomment the following to enable basic zoom/pan logic
-		// var zoom = d3.zoom()
-		// .scaleExtent([1, 40])
-		// .translateExtent([[-100, -100], [width + 90, height + 100]])
-		// .on("zoom", function(){
-		// 	g.attr("transform", d3.event.transform);
-		// 	g.call(d3.event.transform.rescaleX(x));
-		// 	g.call(d3.event.transform.rescaleY(y));
-		// });
-		//
-		// svg.call(zoom);
+    leftInfoBar(nodeData) // Display left side bar
 
+    this._setFocus(node)  // Handle highlighting of selected node
+  }
 
-	});
+  // Input: the d3-formatted topology node clicked by the user
+  // Changes the color of the selected node, as well as its associated master or slaves
+  _setFocus (node) {
+    var _this = this
+
+    if (_this.focus.node !== node) {
+      if (_this.focus.node != null) _this._removeFocus()
+      _this.focus.node = node // Set the currently selected node
+      _this.focus.node.childNodes[0].style.stroke = 'red' // Color the selected node
+
+      if (d3.select(node).datum().data.type.toUpperCase() === 'CLUSTER NODE') {
+        // For each associated master or slave,
+        _this._findAssociatedNodes(node, function (associatedNodes) {
+          associatedNodes.forEach(function (assocNode) {
+            _this.focus.replication.push(assocNode)
+            d3.select(assocNode)._groups[0][0].childNodes[0].style.stroke = 'orange'
+          })
+        })
+      }
+    } else if (_this.focus.node === node) {
+      this._removeFocus()
+    }
+  }
+
+  // Input: a master or slave node
+  // Ouput: a slave's master or the set of a master's slaves, formatted to allow
+  // d3 appending
+  _findAssociatedNodes (selectedNode, done) {
+    var associated = []
+    var _this = this
+    var nodeData = d3.select(selectedNode).datum().data
+
+    var findMaster = nodeData.role.toUpperCase() === 'SLAVE' // Search for master if true
+    var d3Data = _this.node._groups[0]
+
+    d3Data.forEach(function (node) {
+      var d = d3.select(node).datum().data
+      if (d.type.toUpperCase() === 'CLUSTER NODE') {
+        if (findMaster) {
+          if (d.role.toUpperCase() === 'MASTER') {
+            if (d.host === nodeData.replicates.host && d.port === nodeData.replicates.port) {
+              associated.push(node)
+            }
+          }
+        } else {
+          if (d.role.toUpperCase() === 'SLAVE' && !findMaster) {
+            nodeData.slaves.forEach(function (slave) {
+              if (slave.host === d.host && slave.port === d.port) {
+                associated.push(node)
+              }
+            })
+          }
+        }
+      }
+    })
+
+    done(associated)
+  }
+
+  _removeFocus () {
+    this.focus.node.childNodes[0].style.stroke = 'steelblue'
+    this.focus.replication.forEach(function (assocNode) {
+      d3.select(assocNode)._groups[0][0].childNodes[0].style.stroke = 'steelblue'
+    })
+
+    this.focus = {node: null, replication: []}
+  }
 }
 
 // transform data into acceptable object format for d3
-function reformat(data, callback){
+function reformat (data, callback) {
+  data.name = 'Cluster root'
 
-	data.name = "Cluster root";
+  data.children = data.getAvailabilityZones()
+  delete data.zones
 
-	data.children = data.getAvailabilityZones();
-	delete data.zones;
+  data.children.forEach(function (z) {
+    z.children = z.getSubnets()
+    delete z.subnets
+    z.children.forEach(function (net) {
+      net.name = net.netid
+      delete net.netid
 
-	data.children.forEach(function(z){
-		z.children = z.getSubnets();
-		delete z.subnets;
-		z.children.forEach(function(net){
-			net.name = net.netid;
-			delete net.netid;
+      net.children = net.getInstances()
+      delete net.instances
 
-			net.children = net.getInstances();
-			delete net.instances;
+      net.children.forEach(function (inst) {
+        inst.name = inst.id
+        delete inst.id
+        inst.children = inst.getNodes()
+        delete inst.nodes
 
-			net.children.forEach(function(inst){
-				inst.name = inst.id;
-				delete inst.id;
-				inst.children = inst.getNodes();
-				delete inst.nodes;
+        inst.children.forEach(function (n) {
+          n.name = n.port
+          n.children = null
+        })
+      })
+    })
+  })
 
-				inst.children.forEach(function(n){
-					n.name = n.port;
-					n.children = null;
-				});
-			});
-		});
-	});
-
-	callback(data);
-}
-
-
-var focus = null; //Controls highlighting of selected node
-
-function selectNode(node, nodeData){
-	if(nodeData.name == "Cluster root")
-		return;
-
-	if(focus == node) {
-		$("#leftMenuBtn")[0].click();
-		return;
-	}
-
-	leftInfoBar(nodeData);
-
-	if (focus != node){
-		if (focus != null) {
-			focus.childNodes[0].style.stroke = "steelblue";
-		}
-		focus = node;
-		focus.childNodes[0].style.stroke = "red";
-	}
-}
-
-function removeFocus(){
-	focus.childNodes[0].style.stroke = "steelblue";
-	focus = null;
+  callback(data)
 }
