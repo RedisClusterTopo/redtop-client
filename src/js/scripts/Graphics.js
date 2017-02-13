@@ -1,5 +1,4 @@
 var d3 = require('d3')
-var $ = window.$
 var leftInfoBar = require('./InfoBar.js')
 
 module.exports = class Graphics {

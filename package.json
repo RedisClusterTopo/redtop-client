@@ -5,5 +5,8 @@
   "repository": "https://github.com/RedisClusterTopo/redtop-client",
 
   "author": "Alex Kiefer, Cory Stonitsch, Chris Bendt ",
-  "license": "MIT"
+  "license": "MIT",
+  "standard": {
+    "globals": ["$"]
+  }
   }

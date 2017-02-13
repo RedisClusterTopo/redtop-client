@@ -1,5 +1,3 @@
-var $ = window.$
-
 module.exports = function leftInfoBar (data) {
   var side = $('#sidebar-wrapper')
 

@@ -4,8 +4,6 @@ var io = require('socket.io-client')
 // Define socket connection to server
 var socket = io('http://localhost:8080')
 
-var $ = window.$
-
 socket.on('tag-response', function () {
   window.location.href = window.location.href + 'index'// Transfer client to index.html
 })

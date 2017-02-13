@@ -1,5 +1,3 @@
-var $ = window.$
-
 var io = require('socket.io-client')
 
 var MainView = require('./Graphics.js')
