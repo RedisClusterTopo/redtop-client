@@ -2,7 +2,6 @@ var io = require('socket.io-client')
 
 var MainView = require('./Graphics.js')
 var ClusterGen = require('./ClusterGen.js')
-var _parse = require('./ClusterObjectParser.js')
 
 class ClientMessenger {
   constructor () {
@@ -15,29 +14,26 @@ class ClientMessenger {
 
   // Main control points for client behavior
   _addListeners (_this) {
-    // Initial response from the server containing client data
-    _this.socket.on('topo init', function (inTopo) {
-      // Parse -> draw graphics for the initial data
-      _parse(inTopo, function (parsedTopo) {
-        _this.graphics.generate(parsedTopo) // Pass the parsed topology to graphics
-      })
-
-      // Update every 15s
-      setInterval(function () {
-        _this.socket.emit('update topo', _this.clientID)
-      }, 15000)
+    _this.socket.on('update', function (redtop) {
+      console.log(redtop)
+      _this.graphics.generate(redtop)
     })
 
     // Triggers generation of a random cluster to view graphics generation
-    _this.socket.on('topo init test', function () {
+    _this.socket.on('generate random', function () {
       _this.generator.generate(function (newCluster) {
         _this.graphics.generate(newCluster)
       })
     })
 
-    // Triggered when the server sends an update with client data
-    _this.socket.on('topo update', function (topoData) {
-      _parse(topoData, _this.graohics.generate())
+    _this.socket.on('local cluster', function () {
+      _this.generator.generateLocal(function (topoData) {
+        _this.graphics.generate(topoData) // Generate a single-instance topology
+        // Subscribe the client to updates for the local cluster
+        _this.socket.on('update-l', function (redisData) {
+          console.log(redisData)
+        })
+      })
     })
 
     _this.socket.on('client not found', function () {
@@ -54,6 +50,9 @@ class ClientMessenger {
 $(document).ready(function () {
   var messenger = new ClientMessenger()
 
-  // Update the server with what client id to init the app with
-  messenger.socket.emit('init app', messenger.clientID)
+  console.log(messenger.clientID)
+
+  messenger.socket.emit('subscribe', messenger.clientID)
+
+  // Assume locally hosted cluster if no ID found
 })

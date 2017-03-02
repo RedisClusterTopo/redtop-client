@@ -86,8 +86,6 @@ module.exports = class Graphics {
       return 'translate(' + d.x + ',' + d.y + ')'
     })
       .on('click', function () { _this.selectNode(this, d3.select(this).datum().data) })
-
-    console.log(_this.node)
   }
 
   addNodeShape () {
@@ -207,23 +205,23 @@ module.exports = class Graphics {
 function reformat (data, callback) {
   data.name = 'Cluster root'
 
-  data.children = data.getAvailabilityZones()
+  data.children = data.zones
   delete data.zones
 
   data.children.forEach(function (z) {
-    z.children = z.getSubnets()
+    z.children = z.subnets
     delete z.subnets
     z.children.forEach(function (net) {
       net.name = net.netid
       delete net.netid
 
-      net.children = net.getInstances()
+      net.children = net.instances
       delete net.instances
 
       net.children.forEach(function (inst) {
         inst.name = inst.id
         delete inst.id
-        inst.children = inst.getNodes()
+        inst.children = inst.nodes
         delete inst.nodes
 
         inst.children.forEach(function (n) {

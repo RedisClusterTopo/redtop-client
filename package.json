@@ -3,10 +3,15 @@
   "version": "0.1.0",
   "description": "Client topic for the redtop app",
   "repository": "https://github.com/RedisClusterTopo/redtop-client",
-
   "author": "Alex Kiefer, Cory Stonitsch, Chris Bendt ",
   "license": "MIT",
   "standard": {
-    "globals": ["$"]
+    "globals": [
+      "$"
+    ]
+  },
+  "dependencies": {
+    "d3": "^4.6.0",
+    "socket.io-client": "^1.7.3"
   }
-  }
+}

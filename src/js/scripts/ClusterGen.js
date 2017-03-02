@@ -47,6 +47,21 @@ module.exports = class ClusterGen {
     cb(r)
   }
 
+  generateLocal (cb) {
+    var r = new RedTop()
+    var newAz = this.genAZ()
+    var newSubnet = this.genSubnet()
+    var newInst = this.genInstance()
+
+    newInst.ip = '127.0.0.1'
+
+    newSubnet.addInstance(newInst)
+    newAz.addSubnet(newSubnet)
+    r.addAvailabilityZone(newAz)
+
+    cb(r)
+  }
+
   fixHash (r, cb) {
     // Assign each master node an equal share of the hash values
     var rangeMax = 16384
