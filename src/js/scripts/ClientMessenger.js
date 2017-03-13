@@ -1,5 +1,4 @@
 var io = require('socket.io-client')
-
 var MainView = require('./Graphics.js')
 var ClusterGen = require('./ClusterGen.js')
 
@@ -14,9 +13,9 @@ class ClientMessenger {
 
   // Main control points for client behavior
   _addListeners (_this) {
-    _this.socket.on('update', function (redtop) {
-      console.log(redtop)
-      _this.graphics.generate(redtop)
+    _this.socket.on('update', function (clusterState) {
+      console.log(clusterState.redtop)
+      _this.graphics.generate(clusterState.redtop)
     })
 
     // Triggers generation of a random cluster to view graphics generation
@@ -31,7 +30,6 @@ class ClientMessenger {
         _this.graphics.generate(topoData) // Generate a single-instance topology
         // Subscribe the client to updates for the local cluster
         _this.socket.on('update-l', function (redisData) {
-          console.log(redisData)
         })
       })
     })
@@ -50,9 +48,5 @@ class ClientMessenger {
 $(document).ready(function () {
   var messenger = new ClientMessenger()
 
-  console.log(messenger.clientID)
-
   messenger.socket.emit('subscribe', messenger.clientID)
-
-  // Assume locally hosted cluster if no ID found
 })
