@@ -172,14 +172,15 @@ module.exports = class Graphics {
       if (d.type.toUpperCase() === 'CLUSTER NODE') {
         if (findMaster) {
           if (d.role.toUpperCase() === 'MASTER') {
-            if (d.host === nodeData.replicates.host && d.port === nodeData.replicates.port) {
+            if (d.id === nodeData.replicates && d.id === nodeData.replicates) {
               associated.push(node)
             }
           }
         } else {
           if (d.role.toUpperCase() === 'SLAVE' && !findMaster) {
             nodeData.slaves.forEach(function (slave) {
-              if (slave.host === d.host && slave.port === d.port) {
+              if (slave === d.id && slave === d.id) {
+                //console.log(node)
                 associated.push(node)
               }
             })

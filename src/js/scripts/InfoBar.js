@@ -40,7 +40,7 @@ module.exports = function leftInfoBar (data) {
       var slavesList = $('<select> </select>')
 
       $.each(v, function (index, repNode) {
-        var listEntry = $('<option>' + repNode.host + ' : ' + repNode.port + '</option>')
+        var listEntry = $('<option>' + "ID " + ' : ' + v + '</option>')
 
         slavesList.append(listEntry)
       })
@@ -52,7 +52,7 @@ module.exports = function leftInfoBar (data) {
       if (v != null) {
         // Append a dropdown with only the master of a selected slave
         var master = $('<select> </select>')
-        var node = $('<option>' + v.host + ' : ' + v.port + '</option>')
+        var node = $('<option>' + "ID " + ' : ' + v + '</option>')
         master.append(node)
         row.append('<td>' + k + ':' + '</td>')
         row.append(master)
