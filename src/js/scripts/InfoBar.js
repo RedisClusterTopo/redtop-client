@@ -32,10 +32,11 @@ module.exports = function leftInfoBar (data) {
         hashList.append(listEntry)
       })
 
-      row.append('<td id=\'hashRow\'>' + k + ': ' + '</td>')
-
-      row.append(hashList)
+      var td = $('<td id=\'hashRow\'>' + k + ': ' + '</td>')
+      td.append(hashList)
+      row.append(td)
     } else if (k === 'slaves' && data.role.toUpperCase() === 'MASTER') {
+      console.log("appending slaves")
       // Append the drop down of associated slave nodes for a master
       var slavesList = $('<select> </select>')
 
@@ -49,13 +50,15 @@ module.exports = function leftInfoBar (data) {
 
       row.append(slavesList)
     } else if (k === 'replicates' && data.role.toUpperCase() === 'SLAVE') {
+      console.log("appending replicates")
       if (v != null) {
         // Append a dropdown with only the master of a selected slave
         var master = $('<select> </select>')
         var node = $('<option>' + "ID " + ' : ' + v + '</option>')
         master.append(node)
-        row.append('<td>' + k + ':' + '</td>')
-        row.append(master)
+        var td = $('<td>' + k + ':' + '</td>')
+        td.append(master)
+        row.append(td)
       }
     } else if (k === 'replicates' && data.role.toUpperCase() === 'MASTER') {
       // Don't append the replicates field for master (should always be empty)
