@@ -31,13 +31,13 @@ module.exports = class Graphics {
     }
   }
 
-  generate (data) {
+  generate (clusterState) {
     var _this = this
     // Clear the html body
     $('p.topology').empty()
 
-    reformat(data, function (d3Data) {
-      _this.d3_nodes = d3.hierarchy(d3Data)
+    reformat(clusterState.redtop, function (d3redtop) {
+      _this.d3_nodes = d3.hierarchy(d3redtop)
 
       _this.d3_nodes = _this.treemap(_this.d3_nodes)
 
@@ -53,6 +53,33 @@ module.exports = class Graphics {
       _this.addNodes()
       _this.addNodeShape()
       _this.addNodeText()
+      _this.displayStateErrors(clusterState.stateErrors)
+    })
+  }
+
+  displayStateErrors (stateErrors) {
+    var _this = this
+
+    // Set flashing for no replication outside of AZ on masters
+    stateErrors.noExternalReplication.forEach(function (nodeId) {
+      _this.node._groups[0].forEach(function (g) {
+        var nodeData = d3.select(g).datum().data
+        if (nodeData.type.toUpperCase() === 'CLUSTER NODE') {
+          if (nodeData.id === nodeId) {
+              var flasher = setInterval(
+                function () {
+                  if (d3.select(g)._groups[0][0].childNodes[0].style.stroke === 'steelblue') {
+                    d3.select(g)._groups[0][0].childNodes[0].style.stroke = 'red'
+                  } else if (d3.select(g)._groups[0][0].childNodes[0].style.stroke === 'red') {
+                    d3.select(g)._groups[0][0].childNodes[0].style.stroke = 'steelblue'
+                  } else {
+                    d3.select(g)._groups[0][0].childNodes[0].style.stroke = 'red'
+                  }
+                }, 1250
+              )
+          }
+        }
+      })
     })
   }
 
@@ -180,7 +207,6 @@ module.exports = class Graphics {
           if (d.role.toUpperCase() === 'SLAVE' && !findMaster) {
             nodeData.slaves.forEach(function (slave) {
               if (slave === d.id && slave === d.id) {
-                //console.log(node)
                 associated.push(node)
               }
             })
