@@ -1,6 +1,25 @@
 var d3 = require('d3')
 var leftInfoBar = require('./InfoBar.js')
 
+//SVG path components of icons
+var cloud = [
+	{
+			d: "M94.405,53.529c-0.716-2.649-2.065-5.077-3.914-7.13c-3.388-3.039-8.02-4.254-10.452-4.694  c-0.445-0.096-0.897-0.162-1.354-0.206c-0.117-0.014-0.204-0.022-0.246-0.027c-0.025-0.001-0.037-0.003-0.037-0.003  c-0.201-0.531-0.391-1.067-0.587-1.599c-0.428-1.161-0.885-2.301-1.544-3.311c-0.228-0.349-0.48-0.683-0.764-0.997  c-2.5-3.195-6.291-4.973-10.132-5.524c-1.512-0.216-2.474-0.251-3.713-0.089c-0.263,0.034-0.534,0.074-0.829,0.126  c-1.387,0.242-2.665,0.935-3.98,1.319c-0.658-0.347-1.118-0.939-1.678-1.459c-0.093-0.09-0.19-0.172-0.283-0.259  c-2.713-2.542-6.006-4.428-9.585-5.092c-3.377-0.626-4.098-0.938-9.541,0c-0.286,0.049-0.57,0.116-0.855,0.181  c-6.253,0.936-11.275,5.16-12.809,10.631c-0.282,0.639-0.539,1.295-0.745,1.972c-0.528,1.355-2.106,1.286-3.224,1.702  c-0.262,0.091-0.518,0.196-0.776,0.3c-5.391,2.155-9.851,6.98-11.409,12.926c-0.344,0.981-0.597,1.996-0.755,3.036  C5.068,56.15,5,56.983,5,57.828c0,7.132,4.587,13.316,11.241,16.291c2.698,1.207,5.734,1.889,8.945,1.889h49.628  c3.594,0,6.965-0.86,9.889-2.349c2.277-1.158,4.278-2.701,5.897-4.534c2.746-3.106,4.4-7.028,4.4-11.297  C95,56.345,94.779,54.91,94.405,53.529z"
+	}
+]
+
+var router = [
+	{
+		d: "M94.522,27.561c0-1.303-0.58-2.69-1.883-2.69c-1.303,0-1.883,1.386-1.883,2.69l-0.393,30.087h-3.083V52.57  c0-3.047-2.47-5.515-5.516-5.515H10.516C7.469,47.055,5,49.524,5,52.57v14.478c0,3.048,2.469,5.517,5.516,5.517h0.685  c0,1.304,1.057,2.36,2.361,2.36h5.394c1.304,0,2.361-1.056,2.361-2.36h50.244c0,1.304,1.057,2.361,2.361,2.361h5.395  c1.304,0,2.361-1.058,2.361-2.361h0.085c3.046,0,5.516-2.469,5.516-5.517v-2.596h3.037c0.18,1.125,1.148,1.986,2.323,1.986  c1.303,0,2.361-1.057,2.361-2.361L94.522,27.561z"
+	}
+]
+
+var computer = [
+	{
+		d: "M95.584,10.274H4.416c-1.656,0-3,1.343-3,3v57.167c0,1.656,1.344,3,3,3h37.815c-0.251,3.818-1.378,10.443-6.163,10.916  c-0.118,0.012-0.209,0.023-0.288,0.035h-0.571c-1.473,0-2.668,1.193-2.668,2.666s1.195,2.668,2.668,2.668h29.582  c1.473,0,2.668-1.195,2.668-2.668s-1.195-2.666-2.668-2.666H64.22c-0.079-0.012-0.17-0.023-0.288-0.035  c-4.785-0.473-5.912-7.098-6.163-10.916h37.815c1.656,0,3-1.344,3-3V13.274C98.584,11.617,97.24,10.274,95.584,10.274z"
+	}
+]
+
 module.exports = class Graphics {
   constructor () {
     var _this = this
@@ -58,7 +77,6 @@ module.exports = class Graphics {
 
   addLinks () {
     var _this = this
-
     _this.links = _this.g.selectAll('.link')
     .data(_this.d3_nodes.descendants().slice(1))
     .enter().append('path')
@@ -91,17 +109,66 @@ module.exports = class Graphics {
   addNodeShape () {
     var _this = this
 
+		//for each node add the corresponding icon according to node's type
     _this.node._groups[0].forEach(function (n) {
-      if (d3.select(n).datum().data.role === 'Master') {
-        d3.select(n).append('rect')
-        .attr('x', -10)
-        .attr('y', -10)
-        .attr('width', 20)
-        .attr('height', 20)
-      } else {
-        d3.select(n).append('circle')
-        .attr('r', 10)
-      }
+      switch(d3.select(n).datum().data.type) {
+
+      				case "Availability Zone":
+      					d3.select(n).append("g")
+									.attr('transform', 'scale(.5, .5) translate(-45, -20)')
+									.style("stroke", "steelblue")
+									.style("fill", "white")
+									.style("stroke-width", "6px")
+      						.selectAll("path")
+      						.data(cloud)
+      						.enter()
+      						.append("path")
+      						.attr("d", function(d) { return d.d; })
+      					break;
+
+      				case "Subnet":
+      					d3.select(n).append("g")
+      						.attr('transform', 'scale(.6, .6) translate(-45,-32)')
+									.style("stroke", "steelblue")
+									.style("fill", "white")
+									.style("stroke-width", "4px")
+      						.selectAll('path')
+      						.data(router)
+      						.enter()
+      						.append('path')
+      						.attr("d", function(d) { return d.d; })
+      					break;
+
+      				case "EC2 Instance":
+      					d3.select(n).append("g")
+      						.attr('transform', 'scale(.5, .5) translate(-50, -15)')
+									.style("stroke", "steelblue")
+									.style("fill", "white")
+									.style("stroke-width", "6px")
+      						.selectAll('path')
+      						.data(computer)
+      						.enter()
+      						.append('path')
+      						.attr("d", function(d) { return d.d; })
+      					break;
+
+      				case "Cluster Node":
+      					if(d3.select(n).datum().data.role == "Master") {
+      						d3.select(n).append("rect")
+      							.attr('x', -10)
+      							.attr('y', -10)
+      							.attr('width', 20)
+      							.attr('height', 20);
+      					}
+      					else if(d3.select(n).datum().data.role == "Slave") {
+      						d3.select(n).append("circle")
+      							.attr("r", 10);
+      					}
+      					break;
+
+      				default:
+      					break;
+      			}
     })
   }
 
@@ -136,10 +203,10 @@ module.exports = class Graphics {
   // Changes the color of the selected node, as well as its associated master or slaves
   _setFocus (node) {
     var _this = this
-
     if (_this.focus.node !== node) {
       if (_this.focus.node != null) _this._removeFocus()
       _this.focus.node = node // Set the currently selected node
+			console.log(_this.focus.node.childNodes[0])
       _this.focus.node.childNodes[0].style.stroke = 'red' // Color the selected node
 
       if (d3.select(node).datum().data.type.toUpperCase() === 'CLUSTER NODE') {
@@ -180,7 +247,6 @@ module.exports = class Graphics {
           if (d.role.toUpperCase() === 'SLAVE' && !findMaster) {
             nodeData.slaves.forEach(function (slave) {
               if (slave === d.id && slave === d.id) {
-                //console.log(node)
                 associated.push(node)
               }
             })
@@ -232,6 +298,5 @@ function reformat (data, callback) {
       })
     })
   })
-
   callback(data)
 }
