@@ -10,6 +10,7 @@ var ClusterNode = require('ClusterNode.js')
 
 module.exports = class ClusterGen {
   generate (cb) {
+    var clusterState = {}
     var r = new RedTop()
     var _this = this
 
@@ -44,7 +45,8 @@ module.exports = class ClusterGen {
       })
     })
 
-    cb(r)
+    clusterState.redtop = r
+    cb(clusterState)
   }
 
   generateLocal (cb) {
