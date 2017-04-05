@@ -5,7 +5,7 @@ var ClusterGen = require('./ClusterGen.js')
 class ClientMessenger {
   constructor () {
     this.vpcId = $.parseJSON(window.localStorage.vpc).id
-    this.socket = io('http://localhost:8080')
+    this.socket = io(window.location.origin)
     this.graphics = new MainView()
     this.generator = new ClusterGen()
     this._addListeners(this)
