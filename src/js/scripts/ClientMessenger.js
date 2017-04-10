@@ -9,11 +9,17 @@ class ClientMessenger {
     this.graphics = new MainView()
     this.generator = new ClusterGen()
     this._addListeners(this)
+    this.connectionTimeout = setTimeout(function () {
+      window.alert('Connection took longer than 10s. Returning to login')
+      window.location.href = window.location.origin
+    }, 10000)
   }
 
   // Main control points for client behavior
   _addListeners (_this) {
     _this.socket.on('update', function (clusterState) {
+      if (_this.connectionTimeout) clearTimeout(_this.connectionTimeout)
+      if ($('#loadingMsg').css('visibility')) $('#loadingMsg').css('visibility', 'hidden')
       _this.graphics.generate(clusterState)
     })
 
@@ -26,7 +32,7 @@ class ClientMessenger {
 
     _this.socket.on('client not found', function () {
       window.alert('Client ID not found. Returning to tag entry page')
-      window.location.href = 'http://localhost:8080'
+      window.location.href = window.location.origin
     })
 
     _this.socket.on('err', function (e) {

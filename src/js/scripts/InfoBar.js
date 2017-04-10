@@ -36,7 +36,6 @@ module.exports = function leftInfoBar (data) {
       td.append(hashList)
       row.append(td)
     } else if (k === 'slaves' && data.role.toUpperCase() === 'MASTER') {
-      console.log("appending slaves")
       // Append the drop down of associated slave nodes for a master
       var slavesList = $('<select> </select>')
 
@@ -50,7 +49,6 @@ module.exports = function leftInfoBar (data) {
 
       row.append(slavesList)
     } else if (k === 'replicates' && data.role.toUpperCase() === 'SLAVE') {
-      console.log("appending replicates")
       if (v != null) {
         // Append a dropdown with only the master of a selected slave
         var master = $('<select> </select>')
