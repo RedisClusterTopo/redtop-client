@@ -76,12 +76,105 @@ module.exports = class Graphics {
       _this.addNodes()
       _this.addNodeShape()
       _this.addNodeText()
-      _this.displayStateErrors(clusterState.stateErrors)
-
+      //_this.displayStateErrors(clusterState.stateErrors)
+			_this.displaySplitBrainResults(clusterState.failFlags, clusterState.pfailFlags, clusterState.splitBrain)
       if (_this.state.focus.node != null) {
         _this._setFocus(_this.state.focus.node) // Recolor previously selected nodes
       }
     })
+  }
+
+	displaySplitBrainResults(failFlags, pfailFlags, sb)
+  {
+    var _this = this
+    if(sb)//we have a split brain
+    {
+      failFlags.forEach(function (fFlags){
+        fFlags.forEach(function(fFlag){
+          _this.node._groups[0].forEach(function(gf){
+						_this._selectD3NodeById(fFlag[0], function (g, nodeData) {
+			        g.style.stroke = 'yellow'
+
+			        setTimeout(function () {
+			          g.style.stroke = 'black'
+			        }, 1000)
+
+			        setTimeout(function () {
+			          g.style.stroke = 'yellow'
+			        }, 2000)
+
+			        setTimeout(function () {
+			          g.style.stroke = 'black'
+			        }, 3000)
+
+			        setTimeout(function () {
+			          g.style.stroke = 'yellow'
+			        }, 4000)
+
+			        setTimeout(function () {
+			          g.style.stroke = 'black'
+			        }, 5000)
+			      })
+						_this._selectD3NodeById(fFlag[2], function (g, nodeData) {
+			        g.style.stroke = 'green'
+
+			        setTimeout(function () {
+			          g.style.stroke = 'black'
+			        }, 1000)
+
+			        setTimeout(function () {
+			          g.style.stroke = 'green'
+			        }, 2000)
+
+			        setTimeout(function () {
+			          g.style.stroke = 'green'
+			        }, 3000)
+
+			        setTimeout(function () {
+			          g.style.stroke = 'green'
+			        }, 4000)
+
+			        setTimeout(function () {
+			          g.style.stroke = 'black'
+			        }, 5000)
+			      })
+          })
+          })
+      })
+      pfailFlags.forEach(function(pFlags){
+        pFlags.forEach(function(pFlag){
+        _this.node._groups[0].forEach(function(gp){
+					_this._selectD3NodeById(pFlag[0], function (g, nodeData) {
+		        g.style.stroke = 'pink'
+
+		        setTimeout(function () {
+		          g.style.stroke = 'black'
+		        }, 1000)
+
+		        setTimeout(function () {
+		          g.style.stroke = 'pink'
+		        }, 2000)
+
+		        setTimeout(function () {
+		          g.style.stroke = 'black'
+		        }, 3000)
+
+		        setTimeout(function () {
+		          g.style.stroke = 'pink'
+		        }, 4000)
+
+		        setTimeout(function () {
+		          g.style.stroke = 'black'
+		        }, 5000)
+		      })
+        })
+        })
+      })
+    }
+    else {
+
+    }
+
   }
 
   displayStateErrors (stateErrors) {
