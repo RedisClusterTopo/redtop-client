@@ -1,4 +1,4 @@
-module.exports = function leftInfoBar (data) {
+module.exports = function leftInfoBar (data, sbData) {
   var side = $('#sidebar-wrapper')
 
   side.empty()
@@ -70,17 +70,76 @@ module.exports = function leftInfoBar (data) {
     infoTable.append(row)
   })
 
-  side.append(infoTable)
+  buildSplitBrainInfo(sbData,function(resultRow){
+    infoTable.append(resultRow)
+    side.append(infoTable)
 
-  // Button/link for closing the side bar
-  side.append($('<div style=\'text-align:center\' id=\'btnContainer\'>'))
-  $('#btnContainer').append($('<input type=\'button\' id=\'leftMenuBtn\' value=\'Close\'/>'))
-  side.append($('<a href=\'#leftMenuToggle\' class=\'btn btn-default\' id=\'leftMenuToggle\' hidden>Toggle Menu</a>'))
+    // Button/link for closing the side bar
+    side.append($('<div style=\'text-align:center\' id=\'btnContainer\'>'))
+    $('#btnContainer').append($('<input type=\'button\' id=\'leftMenuBtn\' value=\'Close\'/>'))
+    side.append($('<a href=\'#leftMenuToggle\' class=\'btn btn-default\' id=\'leftMenuToggle\' hidden>Toggle Menu</a>'))
 
-  $('#leftMenuBtn').click(function (e) {
-    $('#leftMenuToggle').click()
-    e.preventDefault()
-    $('#wrapper').toggleClass('leftMenuOff')
-    // removeFocus()
+    $('#leftMenuBtn').click(function (e) {
+      $('#leftMenuToggle').click()
+      e.preventDefault()
+      $('#wrapper').toggleClass('leftMenuOff')
+      // removeFocus()
+
   })
+  })
+  function buildSplitBrainInfo(sbData, cb)
+  {
+    if(sbData != null)
+    {
+      var sbRow = $('<tr></tr>')
+      var  sbv= $('<td>' + 'Split Brain View' + '</td>')
+      var i =0, j=0 ,k=0
+      sbRow.append(sbv)
+      if (typeof sbData.ffList !== 'undefined' && sbData.ffList.length > 0)
+      {
+        var td = $('<td>' + 'Fail' + ':' + '</td>')
+        var ffList = $('<select> </select>')
+        sbData.ffList.forEach(function(ff)
+        {
+          var ff =  $('<option>' + "ID " + ' : ' +ff.toString() + '</option>')
+          ffList.append(ff)
+
+        })
+          td.append(ffList)
+          sbRow.append(td)
+          console.log("done fail" + td)
+
+      }
+      if (typeof sbData.pfList !== 'undefined' && sbData.pfList.length > 0)
+      {
+        var td = $('<td>' + 'pFail' + ':' + '</td>')
+        var pfList = $('<select> </select>')
+        sbData.pfList.forEach(function(pf)
+        {
+          var pff =  $('<option>' + "ID " + ' : ' +pf.toString() + '</option>')
+          pfList.append(pff)
+        })
+          td.append(pfList)
+          sbRow.append(td)
+
+          console.log("done pfail" + td)
+
+      }
+      if (typeof sbData.fineList !== 'undefined' && sbData.fineList.length > 0)
+      {
+        var td = $('<td>' +'Fine' + ':' + '</td>')
+        var fList = $('<select> </select>')
+        sbData.fineList.forEach(function(fff){
+          var f =  $('<option>' + "ID " + ' : ' +fff.toString() + '</option>')
+          fList.append(f)
+        })
+          td.append(fList)
+          sbRow.append(td)
+          console.log("done fine" + td)
+
+      }
+        console.log(sbRow)
+        cb(sbRow)
+    }
+  }
 }

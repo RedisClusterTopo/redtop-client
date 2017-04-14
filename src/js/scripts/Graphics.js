@@ -73,108 +73,28 @@ module.exports = class Graphics {
 
       // Draw to the svg canvas
       _this.addLinks()
-      _this.addNodes()
+      _this.addNodes(clusterState)
       _this.addNodeShape()
       _this.addNodeText()
-      //_this.displayStateErrors(clusterState.stateErrors)
-			_this.displaySplitBrainResults(clusterState.failFlags, clusterState.pfailFlags, clusterState.splitBrain)
+      _this.displayStateErrors(clusterState.stateErrors)
+			_this.displaySplitBrainResults(clusterState.sbContainer, clusterState.sb)
       if (_this.state.focus.node != null) {
         _this._setFocus(_this.state.focus.node) // Recolor previously selected nodes
       }
     })
   }
-
-	displaySplitBrainResults(failFlags, pfailFlags, sb)
+  displaySplitBrainResults(sbContainer, sb)
   {
     var _this = this
-    if(sb)//we have a split brain
+    if(sb)
     {
-      failFlags.forEach(function (fFlags){
-        fFlags.forEach(function(fFlag){
-          _this.node._groups[0].forEach(function(gf){
-						_this._selectD3NodeById(fFlag[0], function (g, nodeData) {
-			        g.style.stroke = 'yellow'
-
-			        setTimeout(function () {
-			          g.style.stroke = 'black'
-			        }, 1000)
-
-			        setTimeout(function () {
-			          g.style.stroke = 'yellow'
-			        }, 2000)
-
-			        setTimeout(function () {
-			          g.style.stroke = 'black'
-			        }, 3000)
-
-			        setTimeout(function () {
-			          g.style.stroke = 'yellow'
-			        }, 4000)
-
-			        setTimeout(function () {
-			          g.style.stroke = 'black'
-			        }, 5000)
-			      })
-						_this._selectD3NodeById(fFlag[2], function (g, nodeData) {
-			        g.style.stroke = 'green'
-
-			        setTimeout(function () {
-			          g.style.stroke = 'black'
-			        }, 1000)
-
-			        setTimeout(function () {
-			          g.style.stroke = 'green'
-			        }, 2000)
-
-			        setTimeout(function () {
-			          g.style.stroke = 'green'
-			        }, 3000)
-
-			        setTimeout(function () {
-			          g.style.stroke = 'green'
-			        }, 4000)
-
-			        setTimeout(function () {
-			          g.style.stroke = 'black'
-			        }, 5000)
-			      })
+        sbContainer.forEach(function(sbNode)
+        {
+          _this._selectD3NodeById(sbNode.splitNode, function (g, nodeData) {
+                g.style.strokeDasharray = 5
           })
-          })
-      })
-      pfailFlags.forEach(function(pFlags){
-        pFlags.forEach(function(pFlag){
-        _this.node._groups[0].forEach(function(gp){
-					_this._selectD3NodeById(pFlag[0], function (g, nodeData) {
-		        g.style.stroke = 'pink'
-
-		        setTimeout(function () {
-		          g.style.stroke = 'black'
-		        }, 1000)
-
-		        setTimeout(function () {
-		          g.style.stroke = 'pink'
-		        }, 2000)
-
-		        setTimeout(function () {
-		          g.style.stroke = 'black'
-		        }, 3000)
-
-		        setTimeout(function () {
-		          g.style.stroke = 'pink'
-		        }, 4000)
-
-		        setTimeout(function () {
-		          g.style.stroke = 'black'
-		        }, 5000)
-		      })
         })
-        })
-      })
     }
-    else {
-
-    }
-
   }
 
   displayStateErrors (stateErrors) {
@@ -221,7 +141,7 @@ module.exports = class Graphics {
     })
   }
 
-  addNodes () {
+  addNodes (clusterState) {
     var _this = this
 
     _this.node = _this.g.selectAll('.node')
@@ -234,7 +154,7 @@ module.exports = class Graphics {
     .attr('transform', function (d) {
       return 'translate(' + d.x + ',' + d.y + ')'
     })
-      .on('click', function () { _this.selectNode(this, d3.select(this).datum().data) })
+      .on('click', function () { _this.selectNode(this, d3.select(this).datum().data, clusterState) })
   }
 
   // Append a graphics object for each node
@@ -317,12 +237,12 @@ module.exports = class Graphics {
 
   // Triggered when clicking a topology node
   // TOGGLES sidebar expansion and coloring of focused nodes
-  selectNode (node, nodeData) {
+  selectNode (node, nodeData, clusterState) {
     // Don't select cluster root
     if (nodeData.name === 'Cluster Root') return
-
+    console.log(nodeData)
     var same = false // Determines whether the clicked node is already selected
-
+    var splitNodeInfo = null
     this._removeFocus() // Always remove colors from previously focused node(s)
 
     // Check if the node is already selected
@@ -340,8 +260,19 @@ module.exports = class Graphics {
         this.state.focus.node = nodeData.name
       }
     }
-
-    leftInfoBar(nodeData) // Display left side bar
+    console.log("do we have a splitbrain up in hur" +clusterState.sb)
+    if(clusterState.sb)
+    {
+        clusterState.sbContainer.forEach(function(sNode)
+        {
+          console.log("checking if this is a split node" + nodeData.id +"==" +sNode.splitNode)
+          if(nodeData.id == sNode.splitNode)
+          {
+            splitNodeInfo = sNode
+          }
+        })
+    }
+    leftInfoBar(nodeData, splitNodeInfo) // Display left side bar
     this._setFocus(this.state.focus.node)  // Handle highlighting of selected node
 
     if (same) {
