@@ -1,9 +1,10 @@
 var d3 = require('d3')
-module.exports = function leftInfoBar (data, sbData) {
+module.exports = function leftInfoBar (data) {
   var side = $('#sidebar-wrapper')
 
   side.empty()
 
+  console.log(data)
   // Side bar is hidden if true
   if ($('#wrapper').hasClass('leftMenuOff')) $('#wrapper').toggleClass('leftMenuOff')
 
@@ -17,11 +18,10 @@ module.exports = function leftInfoBar (data, sbData) {
   // Iterate through node data and create table entry for relevant attributes
   $.each(data, function (k, v) {
     if (k === 'children') return
-
     var row = $('<tr></tr>')
 
-    // if (k === 'replicates' && data.role.toUpperCase() === 'SLAVE') {
-    //}
+    if (k === 'replicates' && data.role.toUpperCase() === 'SLAVE') {
+    }
 
     // Create a dropdown containing all the hash ranges selected node is associated with
     if (k === 'hash' && v.length !== 0) {
@@ -69,29 +69,21 @@ module.exports = function leftInfoBar (data, sbData) {
 
     infoTable.append(row)
   })
-  if(sbData!==null){
-    buildSplitBrainInfo(sbData,function(resultRow){
-      infoTable.append(resultRow)
-      side.append(infoTable)
 
-    })
-  }
-  else{
-    side.append(infoTable)
-  }
+  side.append(infoTable)
 
-    // Button/link for closing the side bar
-    side.append($('<div style=\'text-align:center\' id=\'btnContainer\'>'))
-    $('#btnContainer').append($('<input type=\'button\' id=\'leftMenuBtn\' value=\'Close\'/>'))
-    side.append($('<a href=\'#leftMenuToggle\' class=\'btn btn-default\' id=\'leftMenuToggle\' hidden>Toggle Menu</a>'))
+  // Button/link for closing the side bar
+  side.append($('<div style=\'text-align:center\' id=\'btnContainer\'>'))
+  $('#btnContainer').append($('<input type=\'button\' id=\'leftMenuBtn\' value=\'Close\'/>'))
+  side.append($('<a href=\'#leftMenuToggle\' class=\'btn btn-default\' id=\'leftMenuToggle\' hidden>Toggle Menu</a>'))
 
-    $('#leftMenuBtn').click(function (e) {
-      $('#leftMenuToggle').click()
-      e.preventDefault()
-      $('#wrapper').toggleClass('leftMenuOff')
-      // removeFocus()
-
+  $('#leftMenuBtn').click(function (e) {
+    $('#leftMenuToggle').click()
+    e.preventDefault()
+    $('#wrapper').toggleClass('leftMenuOff')
+    // removeFocus()
   })
+
   function buildSplitBrainInfo(sbData, cb)
   {
     if(sbData != null)

@@ -48,13 +48,15 @@ module.exports = class Graphics {
       focus: {  // Currently selected node (clicked on)
         node: null, // The node id
         replication: [] // Collection of slave IDs if master is selected, otherwise the selected node's master
-      },
-      flashing: []  // Node IDs of any flashing node
+      }
     }
   }
 
   // Orchestrate function calls for redrawing the topology when receiving an update
   generate (clusterState) {
+    this.clusterState = clusterState
+
+    console.log(this.clusterState)
     var _this = this
 
     $('p.topology').empty() // Clear the html body
@@ -77,58 +79,10 @@ module.exports = class Graphics {
       _this.addNodeShape()
       _this.addNodeText()
       // _this.displayStateErrors(clusterState.stateErrors)
-			//_this.displaySplitBrainResults(clusterState.sbContainer, clusterState.sb)
+			// _this.displaySplitBrainResults(clusterState.sbContainer, clusterState.sb)
       if (_this.state.focus.node != null) {
         _this._setFocus(_this.state.focus.node) // Recolor previously selected nodes
       }
-    })
-  }
-
-  displaySplitBrainResults(sbContainer, sb)
-  {
-    var _this = this
-    if(sb)
-    {
-        sbContainer.forEach(function(sbNode)
-        {
-          _this._selectD3NodeById(sbNode.splitNode, function (g, nodeData) {
-                g.style.stroke = '#ffffff'
-                g.style.strokeDasharray = 6
-          })
-        })
-    }
-  }
-
-  displayStateErrors (stateErrors) {
-    var _this = this
-
-    stateErrors.noExternalReplication.forEach(function (node) {
-      _this._selectD3NodeById(node, function (g, nodeData) {
-        g.style.stroke = '#ff0000'
-        g.style.fill = '#ff8080'
-
-        setTimeout(function () {
-          g.style.stroke = 'black'
-        }, 1000)
-
-        setTimeout(function () {
-            g.style.stroke = '#ff0000'
-            g.style.fill = '#ff8080'
-        }, 2000)
-
-        setTimeout(function () {
-          g.style.stroke = 'black'
-        }, 3000)
-
-        setTimeout(function () {
-            g.style.stroke = '#ff0000'
-            g.style.fill = '#ff8080'
-        }, 4000)
-
-        setTimeout(function () {
-          g.style.stroke = 'black'
-        }, 5000)
-      })
     })
   }
 
@@ -224,11 +178,35 @@ module.exports = class Graphics {
               .style('stroke', '#1aff66')
               .style('fill', '#00802b')
           }
+
+          _this.styleNodeViaState(d3.select(n)._groups[0][0].firstChild, d3.select(n).datum().data, function () {
+
+          })
           break
         default:
           break
       }
     })
+  }
+
+  styleNodeViaState (g, nodeData, cb) {
+    var _this = this
+
+    console.log(nodeData.id !== _this.state.focus.node && !_this.state.focus.replication.includes(nodeData.id))
+    if (nodeData.id !== _this.state.focus.node && !_this.state.focus.replication.includes(nodeData.id)) {
+      if (nodeData.state.toUpperCase() === 'FAIL') {
+        g.style.stroke = '#ff0000'
+        g.style.fill = '#ff8080'
+      } else if (nodeData.state.toUpperCase() === 'SPLIT') {
+        g.style.stroke = '#ffffff'
+        g.style.strokeDasharray = 6
+      } else if (nodeData.state.toUpperCase() === 'NORMAL') {
+        if (_this.clusterState.stateErrors.noExternalReplication.includes(nodeData.id)) {
+          g.style.stroke = '#ffff66'
+          g.style.fill = '#ffff00'
+        }
+      }
+    }
   }
 
   // Append text to d3 nodes using the "name" field of its associated data
@@ -248,9 +226,7 @@ module.exports = class Graphics {
   selectNode (node, nodeData, clusterState) {
     // Don't select cluster root
     if (nodeData.name === 'Cluster Root') return
-    console.log(nodeData)
     var same = false // Determines whether the clicked node is already selected
-    var splitNodeInfo = null
     this._removeFocus() // Always remove colors from previously focused node(s)
 
     // Check if the node is already selected
@@ -268,19 +244,8 @@ module.exports = class Graphics {
         this.state.focus.node = nodeData.name
       }
     }
-    console.log("do we have a splitbrain up in hur" +clusterState.sb)
-    if(clusterState.sb)
-    {
-        clusterState.sbContainer.forEach(function(sNode)
-        {
-          console.log("checking if this is a split node" + nodeData.id +"==" +sNode.splitNode)
-          if(nodeData.id == sNode.splitNode)
-          {
-            splitNodeInfo = sNode
-          }
-        })
-    }
-    leftInfoBar(nodeData, splitNodeInfo) // Display left side bar
+
+    leftInfoBar(nodeData) // Display left side bar
     this._setFocus(this.state.focus.node)  // Handle highlighting of selected node
 
     if (same) {
@@ -299,15 +264,16 @@ module.exports = class Graphics {
       g.style.stroke = 'red'
 
       // Change color of associated nodes to orange
+      console.log(nodeData.replicates)
+      console.log(nodeData.slaves)
       if (nodeData.replicates) {
-        if (typeof (nodeData.replicates) === 'string') {
-          _this._selectD3NodeById(nodeData.replicates, function (g, nodeData) {
-            _this.state.focus.replication.push(nodeData.replicates)
-            g.style.stroke = 'orange'
-          })
-        }
-      } else if (nodeData.slaves) {
+        _this._selectD3NodeById(nodeData.replicates, function (g, nodeData) {
+          _this.state.focus.replication.push(nodeData.replicates)
+          g.style.stroke = 'orange'
+        })
+      } else if (nodeData.slaves.length > 0) {
         nodeData.slaves.forEach(function (replicationId) {
+          console.log(replicationId)
           _this.state.focus.replication.push(replicationId)
           _this._selectD3NodeById(replicationId, function (g, nodeData) {
             g.style.stroke = 'orange'
@@ -324,7 +290,17 @@ module.exports = class Graphics {
     // Revert main node
     // TODO handle selecting nodes vs the rest of the cluster
 
-    this._selectD3NodeById(_this.state.focus.node, function (g) {
+    this._selectD3NodeById(_this.state.focus.node, function (g, nodeData) {
+
+      if (nodeData.state.toUpperCase() === 'FAIL') {
+
+      } else if (nodeData.state.toUpperCase() === 'PFAIL') {
+
+      } else if (nodeData.state.toUpperCase() === 'SPLIT') {
+
+      } else if (nodeData.state.toUpperCase() === 'NORMAL') {
+      }
+
       g.style.stroke = 'steelblue'
     })
 
@@ -332,6 +308,14 @@ module.exports = class Graphics {
     if (this.state.focus.replication.length > 0) {
       this.state.focus.replication.forEach(function (assocNode) {
         _this._selectD3NodeById(assocNode, function (g) {
+          if (nodeData.state.toUpperCase() === 'FAIL') {
+
+          } else if (nodeData.state.toUpperCase() === 'PFAIL') {
+
+          } else if (nodeData.state.toUpperCase() === 'SPLIT') {
+
+          } else if (nodeData.state.toUpperCase() === 'NORMAL') {
+          }
           g.style.stroke = 'steelblue'
         })
       })
