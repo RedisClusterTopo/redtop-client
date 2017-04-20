@@ -1,3 +1,4 @@
+var d3 = require('d3')
 module.exports = function leftInfoBar (data, sbData) {
   var side = $('#sidebar-wrapper')
 
@@ -19,9 +20,8 @@ module.exports = function leftInfoBar (data, sbData) {
 
     var row = $('<tr></tr>')
 
-    if (k === 'replicates' && data.role.toUpperCase() === 'SLAVE') {
-
-    }
+    // if (k === 'replicates' && data.role.toUpperCase() === 'SLAVE') {
+    //}
 
     // Create a dropdown containing all the hash ranges selected node is associated with
     if (k === 'hash' && v.length !== 0) {
@@ -37,7 +37,7 @@ module.exports = function leftInfoBar (data, sbData) {
       row.append(td)
     } else if (k === 'slaves' && data.role.toUpperCase() === 'MASTER') {
       // Append the drop down of associated slave nodes for a master
-      var slavesList = $('<select> </select>')
+      var slavesList = $('<select></select>')
 
       $.each(v, function (index, repNode) {
         var listEntry = $('<option>' + "ID " + ' : ' + v + '</option>')
@@ -69,10 +69,16 @@ module.exports = function leftInfoBar (data, sbData) {
 
     infoTable.append(row)
   })
+  if(sbData!==null){
+    buildSplitBrainInfo(sbData,function(resultRow){
+      infoTable.append(resultRow)
+      side.append(infoTable)
 
-  buildSplitBrainInfo(sbData,function(resultRow){
-    infoTable.append(resultRow)
+    })
+  }
+  else{
     side.append(infoTable)
+  }
 
     // Button/link for closing the side bar
     side.append($('<div style=\'text-align:center\' id=\'btnContainer\'>'))
@@ -86,7 +92,6 @@ module.exports = function leftInfoBar (data, sbData) {
       // removeFocus()
 
   })
-  })
   function buildSplitBrainInfo(sbData, cb)
   {
     if(sbData != null)
@@ -94,52 +99,52 @@ module.exports = function leftInfoBar (data, sbData) {
       var sbRow = $('<tr></tr>')
       var  sbv= $('<td>' + 'Split Brain View' + '</td>')
       var i =0, j=0 ,k=0
-      sbRow.append(sbv)
+      //sbRow.append(sbv)
       if (typeof sbData.ffList !== 'undefined' && sbData.ffList.length > 0)
       {
-        var td = $('<td>' + 'Fail' + ':' + '</td>')
+        //var td = $('<td>' + 'Fail' + ':' + '</td>')
         var ffList = $('<select> </select>')
         sbData.ffList.forEach(function(ff)
         {
-          var ff =  $('<option>' + "ID " + ' : ' +ff.toString() + '</option>')
+          var ff =  $('<option>' + "Fail " + ' : ' +ff.toString() + '</option>')
           ffList.append(ff)
 
         })
-          td.append(ffList)
-          sbRow.append(td)
-          console.log("done fail" + td)
+          sbv.append(ffList)
+          sbRow.append(sbv)
+          //console.log("done fail" + td)
 
       }
       if (typeof sbData.pfList !== 'undefined' && sbData.pfList.length > 0)
       {
-        var td = $('<td>' + 'pFail' + ':' + '</td>')
+        //var td = $('<td>' + 'pFail' + ':' + '</td>')
         var pfList = $('<select> </select>')
         sbData.pfList.forEach(function(pf)
         {
-          var pff =  $('<option>' + "ID " + ' : ' +pf.toString() + '</option>')
+          var pff =  $('<option>' + "pFail " + ' : ' +pf.toString() + '</option>')
           pfList.append(pff)
         })
-          td.append(pfList)
-          sbRow.append(td)
-
-          console.log("done pfail" + td)
+          sbv.append(pfList)
+          sbRow.append(sbv)
+          //console.log("done pfail" + td)
 
       }
       if (typeof sbData.fineList !== 'undefined' && sbData.fineList.length > 0)
       {
-        var td = $('<td>' +'Fine' + ':' + '</td>')
+        //var td = $('<td>' +'Fine' + ':' + '</td>')
         var fList = $('<select> </select>')
         sbData.fineList.forEach(function(fff){
-          var f =  $('<option>' + "ID " + ' : ' +fff.toString() + '</option>')
+          var f =  $('<option>' + "Fine " + ' : ' +fff.toString() + '</option>')
           fList.append(f)
         })
-          td.append(fList)
-          sbRow.append(td)
-          console.log("done fine" + td)
+          sbv.append(fList)
+          sbRow.append(sbv)
+          //console.log("done fine" + td)
 
       }
         console.log(sbRow)
         cb(sbRow)
     }
   }
+
 }

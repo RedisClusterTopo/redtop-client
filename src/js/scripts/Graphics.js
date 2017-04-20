@@ -76,13 +76,14 @@ module.exports = class Graphics {
       _this.addNodes(clusterState)
       _this.addNodeShape()
       _this.addNodeText()
-      _this.displayStateErrors(clusterState.stateErrors)
-			_this.displaySplitBrainResults(clusterState.sbContainer, clusterState.sb)
+      // _this.displayStateErrors(clusterState.stateErrors)
+			//_this.displaySplitBrainResults(clusterState.sbContainer, clusterState.sb)
       if (_this.state.focus.node != null) {
         _this._setFocus(_this.state.focus.node) // Recolor previously selected nodes
       }
     })
   }
+
   displaySplitBrainResults(sbContainer, sb)
   {
     var _this = this
@@ -91,7 +92,8 @@ module.exports = class Graphics {
         sbContainer.forEach(function(sbNode)
         {
           _this._selectD3NodeById(sbNode.splitNode, function (g, nodeData) {
-                g.style.strokeDasharray = 5
+                g.style.stroke = '#ffffff'
+                g.style.strokeDasharray = 6
           })
         })
     }
@@ -102,14 +104,16 @@ module.exports = class Graphics {
 
     stateErrors.noExternalReplication.forEach(function (node) {
       _this._selectD3NodeById(node, function (g, nodeData) {
-        g.style.stroke = 'red'
+        g.style.stroke = '#ff0000'
+        g.style.fill = '#ff8080'
 
         setTimeout(function () {
           g.style.stroke = 'black'
         }, 1000)
 
         setTimeout(function () {
-          g.style.stroke = 'red'
+            g.style.stroke = '#ff0000'
+            g.style.fill = '#ff8080'
         }, 2000)
 
         setTimeout(function () {
@@ -117,7 +121,8 @@ module.exports = class Graphics {
         }, 3000)
 
         setTimeout(function () {
-          g.style.stroke = 'red'
+            g.style.stroke = '#ff0000'
+            g.style.fill = '#ff8080'
         }, 4000)
 
         setTimeout(function () {
@@ -168,8 +173,8 @@ module.exports = class Graphics {
         case 'Availability Zone':
           d3.select(n).append('g')
             .attr('transform', 'scale(.5, .5) translate(-45, -20)')
-            .style('stroke', 'steelblue')
-            .style('fill', 'white')
+            .style('stroke', '#6b6b47')
+            .style('fill', '#999966')
             .style('stroke-width', '6px')
             .selectAll('path')
             .data(cloud)
@@ -181,8 +186,8 @@ module.exports = class Graphics {
         case 'Subnet':
           d3.select(n).append('g')
             .attr('transform', 'scale(.6, .6) translate(-45,-32)')
-            .style('stroke', 'steelblue')
-            .style('fill', 'white')
+            .style('stroke', '#6b6b47')
+            .style('fill', '#999966')
             .style('stroke-width', '4px')
             .selectAll('path')
             .data(router)
@@ -194,8 +199,8 @@ module.exports = class Graphics {
         case 'EC2 Instance':
           d3.select(n).append('g')
             .attr('transform', 'scale(.5, .5) translate(-50, -15)')
-            .style('stroke', 'steelblue')
-            .style('fill', 'white')
+            .style('stroke', '#6b6b47')
+            .style('fill', '#999966')
             .style('stroke-width', '6px')
             .selectAll('path')
             .data(computer)
@@ -209,14 +214,17 @@ module.exports = class Graphics {
             d3.select(n).append('rect')
               .attr('x', -10)
               .attr('y', -10)
-              .attr('width', 20)
-              .attr('height', 20)
+              .style('stroke', '#1aff66')
+              .style('fill', '#00802b')
+              .attr('width', 25)
+              .attr('height', 25)
           } else if (d3.select(n).datum().data.role === 'Slave') {
             d3.select(n).append('circle')
-              .attr('r', 10)
+              .attr('r', 15)
+              .style('stroke', '#1aff66')
+              .style('fill', '#00802b')
           }
           break
-
         default:
           break
       }
@@ -228,10 +236,10 @@ module.exports = class Graphics {
     var _this = this
 
     _this.node.append('text')
-    .attr('dy', '.4em')
+    .attr('dy', '.8em')
     .attr('y', function (d) { return d.children ? -20 : 20 })
     .style('text-anchor', 'middle')
-    .style('fill', 'grey')
+    .style('fill', 'white')
     .text(function (d) { return d.data.name })
   }
 
@@ -314,6 +322,8 @@ module.exports = class Graphics {
     var _this = this
 
     // Revert main node
+    // TODO handle selecting nodes vs the rest of the cluster
+
     this._selectD3NodeById(_this.state.focus.node, function (g) {
       g.style.stroke = 'steelblue'
     })
