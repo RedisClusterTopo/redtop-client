@@ -55,7 +55,7 @@ module.exports = class Graphics {
   // Orchestrate function calls for redrawing the topology when receiving an update
   generate (clusterState) {
     this.clusterState = clusterState
-
+    console.log('cluster state')
     console.log(this.clusterState)
     var _this = this
 
@@ -81,6 +81,8 @@ module.exports = class Graphics {
       // _this.displayStateErrors(clusterState.stateErrors)
 			// _this.displaySplitBrainResults(clusterState.sbContainer, clusterState.sb)
       if (_this.state.focus.node != null) {
+        console.log('refocusing node')
+        console.log(_this.state.focus.node)
         _this._setFocus(_this.state.focus.node) // Recolor previously selected nodes
       }
     })
@@ -180,8 +182,8 @@ module.exports = class Graphics {
           }
 
           _this.styleNodeViaState(d3.select(n)._groups[0][0].firstChild, d3.select(n).datum().data, function () {
-
           })
+
           break
         default:
           break
@@ -192,8 +194,8 @@ module.exports = class Graphics {
   styleNodeViaState (g, nodeData, cb) {
     var _this = this
 
-    console.log(nodeData.id !== _this.state.focus.node && !_this.state.focus.replication.includes(nodeData.id))
-    if (nodeData.id !== _this.state.focus.node && !_this.state.focus.replication.includes(nodeData.id)) {
+    //console.log(nodeData.id !== _this.state.focus.node && !_this.state.focus.replication.includes(nodeData.id))
+    //if (nodeData.id !== _this.state.focus.node && !_this.state.focus.replication.includes(nodeData.id)) {
       if (nodeData.state.toUpperCase() === 'FAIL') {
         g.style.stroke = '#ff0000'
         g.style.fill = '#ff8080'
@@ -201,12 +203,18 @@ module.exports = class Graphics {
         g.style.stroke = '#ffffff'
         g.style.strokeDasharray = 6
       } else if (nodeData.state.toUpperCase() === 'NORMAL') {
+        console.log(_this.clusterState.stateErrors.noExternalReplication.includes(nodeData.id))
         if (_this.clusterState.stateErrors.noExternalReplication.includes(nodeData.id)) {
           g.style.stroke = '#ffff66'
           g.style.fill = '#ffff00'
         }
+        else {
+          g.style.stroke = '#1aff66'
+          g.style.fill = '#00802b'
+        }
       }
-    }
+    //}
+    cb()
   }
 
   // Append text to d3 nodes using the "name" field of its associated data
@@ -259,27 +267,37 @@ module.exports = class Graphics {
   // Changes the color of the selected node, as well as its associated master or slaves
   _setFocus (node) {
     var _this = this
-
+    this._removeFocus()
     _this._selectD3NodeById(node, function (g, nodeData) {
-      g.style.stroke = 'red'
+      console.log('setting focus of node')
+      //console.log(g)
+      console.log(nodeData)
+      _this.styleNodeViaState(g, nodeData, function () {
+        g.style.stroke = 'red'
+
 
       // Change color of associated nodes to orange
-      console.log(nodeData.replicates)
-      console.log(nodeData.slaves)
+      //console.log(nodeData.replicates)
+      //console.log(nodeData.slaves)
       if (nodeData.replicates) {
         _this._selectD3NodeById(nodeData.replicates, function (g, nodeData) {
           _this.state.focus.replication.push(nodeData.replicates)
-          g.style.stroke = 'orange'
-        })
-      } else if (nodeData.slaves.length > 0) {
-        nodeData.slaves.forEach(function (replicationId) {
-          console.log(replicationId)
-          _this.state.focus.replication.push(replicationId)
-          _this._selectD3NodeById(replicationId, function (g, nodeData) {
+          _this.styleNodeViaState(g, nodeData, function () {
             g.style.stroke = 'orange'
           })
         })
+      } else if (nodeData.slaves.length > 0) {
+        nodeData.slaves.forEach(function (replicationId) {
+          //console.log(replicationId)
+          _this.state.focus.replication.push(replicationId)
+          _this._selectD3NodeById(replicationId, function (g, nodeData) {
+            _this.styleNodeViaState(g, nodeData, function () {
+              g.style.stroke = 'orange'
+            })
+          })
+        })
       }
+      })
     })
   }
 
@@ -291,32 +309,41 @@ module.exports = class Graphics {
     // TODO handle selecting nodes vs the rest of the cluster
 
     this._selectD3NodeById(_this.state.focus.node, function (g, nodeData) {
+      console.log('removing focus of node')
+      console.log(g)
+      console.log(nodeData)
+       _this.styleNodeViaState (g, nodeData, function(){
 
-      if (nodeData.state.toUpperCase() === 'FAIL') {
+       })
 
-      } else if (nodeData.state.toUpperCase() === 'PFAIL') {
+      // if (nodeData.state.toUpperCase() === 'FAIL') {
+      //
+      // } else if (nodeData.state.toUpperCase() === 'PFAIL') {
+      //
+      // } else if (nodeData.state.toUpperCase() === 'SPLIT') {
+      //
+      // } else if (nodeData.state.toUpperCase() === 'NORMAL') {
+      // }
 
-      } else if (nodeData.state.toUpperCase() === 'SPLIT') {
-
-      } else if (nodeData.state.toUpperCase() === 'NORMAL') {
-      }
-
-      g.style.stroke = 'steelblue'
+      //g.style.stroke = 'steelblue'
     })
 
     // Revert associated nodes if present
     if (this.state.focus.replication.length > 0) {
       this.state.focus.replication.forEach(function (assocNode) {
-        _this._selectD3NodeById(assocNode, function (g) {
-          if (nodeData.state.toUpperCase() === 'FAIL') {
+        _this._selectD3NodeById(assocNode, function (g, nodeData) {
+          _this.styleNodeViaState (g, nodeData, function(){
 
-          } else if (nodeData.state.toUpperCase() === 'PFAIL') {
-
-          } else if (nodeData.state.toUpperCase() === 'SPLIT') {
-
-          } else if (nodeData.state.toUpperCase() === 'NORMAL') {
-          }
-          g.style.stroke = 'steelblue'
+          })
+          // if (nodeData.state.toUpperCase() === 'FAIL') {
+          //
+          // } else if (nodeData.state.toUpperCase() === 'PFAIL') {
+          //
+          // } else if (nodeData.state.toUpperCase() === 'SPLIT') {
+          //
+          // } else if (nodeData.state.toUpperCase() === 'NORMAL') {
+          // }
+          //g.style.stroke = 'steelblue'
         })
       })
     }
