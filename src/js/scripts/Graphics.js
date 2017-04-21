@@ -55,8 +55,6 @@ module.exports = class Graphics {
   // Orchestrate function calls for redrawing the topology when receiving an update
   generate (clusterState) {
     this.clusterState = clusterState
-    console.log('cluster state')
-    console.log(this.clusterState)
     var _this = this
 
     $('p.topology').empty() // Clear the html body
@@ -78,11 +76,7 @@ module.exports = class Graphics {
       _this.addNodes(clusterState)
       _this.addNodeShape()
       _this.addNodeText()
-      // _this.displayStateErrors(clusterState.stateErrors)
-			// _this.displaySplitBrainResults(clusterState.sbContainer, clusterState.sb)
       if (_this.state.focus.node != null) {
-        console.log('refocusing node')
-        console.log(_this.state.focus.node)
         _this._setFocus(_this.state.focus.node) // Recolor previously selected nodes
       }
     })
@@ -193,9 +187,6 @@ module.exports = class Graphics {
 
   styleNodeViaState (g, nodeData, cb) {
     var _this = this
-
-    //console.log(nodeData.id !== _this.state.focus.node && !_this.state.focus.replication.includes(nodeData.id))
-    //if (nodeData.id !== _this.state.focus.node && !_this.state.focus.replication.includes(nodeData.id)) {
       if (nodeData.state.toUpperCase() === 'FAIL') {
         g.style.stroke = '#ff0000'
         g.style.fill = '#ff8080'
@@ -203,7 +194,6 @@ module.exports = class Graphics {
         g.style.stroke = '#ffffff'
         g.style.strokeDasharray = 6
       } else if (nodeData.state.toUpperCase() === 'NORMAL') {
-        console.log(_this.clusterState.stateErrors.noExternalReplication.includes(nodeData.id))
         if (_this.clusterState.stateErrors.noExternalReplication.includes(nodeData.id)) {
           g.style.stroke = '#ffff66'
           g.style.fill = '#ffff00'
@@ -213,7 +203,6 @@ module.exports = class Graphics {
           g.style.fill = '#00802b'
         }
       }
-    //}
     cb()
   }
 
@@ -234,6 +223,7 @@ module.exports = class Graphics {
   selectNode (node, nodeData, clusterState) {
     // Don't select cluster root
     if (nodeData.name === 'Cluster Root') return
+    if (nodeData.type.toUpperCase() === 'EC2 INSTANCE' || nodeData.type.toUpperCase() === 'SUBNET' || nodeData.type.toUpperCase() === 'AVAILABILITY ZONES') return
     var same = false // Determines whether the clicked node is already selected
     this._removeFocus() // Always remove colors from previously focused node(s)
 
@@ -269,30 +259,23 @@ module.exports = class Graphics {
     var _this = this
     this._removeFocus()
     _this._selectD3NodeById(node, function (g, nodeData) {
-      console.log('setting focus of node')
-      //console.log(g)
-      console.log(nodeData)
       _this.styleNodeViaState(g, nodeData, function () {
         g.style.stroke = 'red'
 
-
       // Change color of associated nodes to orange
-      //console.log(nodeData.replicates)
-      //console.log(nodeData.slaves)
       if (nodeData.replicates) {
-        _this._selectD3NodeById(nodeData.replicates, function (g, nodeData) {
-          _this.state.focus.replication.push(nodeData.replicates)
-          _this.styleNodeViaState(g, nodeData, function () {
-            g.style.stroke = 'orange'
+        _this._selectD3NodeById(nodeData.replicates, function (g, nodeData2) {
+          _this.state.focus.replication.push(nodeData.replicates.toString())
+          _this.styleNodeViaState(g, nodeData2, function () {
+            g.style.stroke = '#000000'
           })
         })
       } else if (nodeData.slaves.length > 0) {
         nodeData.slaves.forEach(function (replicationId) {
-          //console.log(replicationId)
           _this.state.focus.replication.push(replicationId)
           _this._selectD3NodeById(replicationId, function (g, nodeData) {
             _this.styleNodeViaState(g, nodeData, function () {
-              g.style.stroke = 'orange'
+              g.style.stroke = '#000000'
             })
           })
         })
@@ -309,23 +292,9 @@ module.exports = class Graphics {
     // TODO handle selecting nodes vs the rest of the cluster
 
     this._selectD3NodeById(_this.state.focus.node, function (g, nodeData) {
-      console.log('removing focus of node')
-      console.log(g)
-      console.log(nodeData)
        _this.styleNodeViaState (g, nodeData, function(){
 
        })
-
-      // if (nodeData.state.toUpperCase() === 'FAIL') {
-      //
-      // } else if (nodeData.state.toUpperCase() === 'PFAIL') {
-      //
-      // } else if (nodeData.state.toUpperCase() === 'SPLIT') {
-      //
-      // } else if (nodeData.state.toUpperCase() === 'NORMAL') {
-      // }
-
-      //g.style.stroke = 'steelblue'
     })
 
     // Revert associated nodes if present
@@ -335,15 +304,6 @@ module.exports = class Graphics {
           _this.styleNodeViaState (g, nodeData, function(){
 
           })
-          // if (nodeData.state.toUpperCase() === 'FAIL') {
-          //
-          // } else if (nodeData.state.toUpperCase() === 'PFAIL') {
-          //
-          // } else if (nodeData.state.toUpperCase() === 'SPLIT') {
-          //
-          // } else if (nodeData.state.toUpperCase() === 'NORMAL') {
-          // }
-          //g.style.stroke = 'steelblue'
         })
       })
     }

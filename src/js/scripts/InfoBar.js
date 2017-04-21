@@ -1,7 +1,7 @@
 var d3 = require('d3')
 module.exports = function leftInfoBar (data) {
   var side = $('#sidebar-wrapper')
-
+  if (data.type.toUpperCase() === 'SUBNET' || data.type.toUpperCase() === 'EC2 INSTANCE' || data.type.toUpperCase() === 'AVAILABILITY ZONE') return
   side.empty()
 
   console.log(data)
@@ -37,17 +37,15 @@ module.exports = function leftInfoBar (data) {
       row.append(td)
     } else if (k === 'slaves' && data.role.toUpperCase() === 'MASTER') {
       // Append the drop down of associated slave nodes for a master
+      var td = $('<td id =\'slavesList\'>' + k + ': ' + '</td>')
       var slavesList = $('<select></select>')
-
       $.each(v, function (index, repNode) {
         var listEntry = $('<option>' + "ID " + ' : ' + v + '</option>')
 
         slavesList.append(listEntry)
       })
-
-      row.append('<td>' + k + ':' + '</td>')
-
-      row.append(slavesList)
+      td.append(slavesList)
+      row.append(td)
     } else if (k === 'replicates' && data.role.toUpperCase() === 'SLAVE') {
       if (v != null) {
         // Append a dropdown with only the master of a selected slave
@@ -62,6 +60,80 @@ module.exports = function leftInfoBar (data) {
       // Don't append the replicates field for master (should always be empty)
     } else if (k === 'slaves' && data.role.toUpperCase() === 'SLAVE') {
       // Don't append the slaves field for slaves (should always be empty)
+    } else if (k === 'seesNormal') {
+      if (v.length > 0) {
+        var list = $('<select></select>')
+        var td = $('<td>Sees Normal</td>')
+        v.forEach(function (id) {
+          var listEntry = $('<option>ID ' + id + '</option>')
+          list.append(listEntry)
+        })
+
+        td.append(list)
+        row.append(td)
+      }
+    } else if (k === 'seesPfail') {
+      if (v.length > 0) {
+        var list = $('<select></select>')
+        var td = $('<td>Sees PFail</td>')
+        v.forEach(function (id) {
+          var listEntry = $('<option>ID ' + id + '</option>')
+          list.append(listEntry)
+        })
+
+        td.append(list)
+        row.append(td)
+      }
+    } else if (k === 'seesFail') {
+      if (v.length > 0) {
+        var list = $('<select></select>')
+        var td = $('<td>Sees Fail</td>')
+        v.forEach(function (id) {
+          var listEntry = $('<option>ID ' + id + '</option>')
+          list.append(listEntry)
+        })
+
+        td.append(list)
+        row.append(td)
+      }
+    } else if (k === 'seesConnecting') {
+      if (v.length > 0) {
+        var list = $('<select></select>')
+        var td = $('<td>Sees Connecting</td>')
+        v.forEach(function (id) {
+          var listEntry = $('<option>ID ' + id + '</option>')
+          list.append(listEntry)
+        })
+
+        td.append(list)
+        row.append(td)
+      }
+    } else if (k === 'noAddr') {
+      if (v.length > 0) {
+        var list = $('<select></select>')
+        var td = $('<td>Sees No Address</td>')
+        v.forEach(function (id) {
+          var listEntry = $('<option>ID ' + id + '</option>')
+          list.append(listEntry)
+        })
+
+        td.append(list)
+        row.append(td)
+      }
+    } else if (k === 'splitView') {
+      if (v.length > 0) {
+        var list = $('<select></select>')
+        var td = $('<td>Sees Different ID</td>')
+        v.forEach(function (view) {
+          var listEntry = $('<option>ID: ' + view.id + ' sees ' + view.sees + '</option>')
+          list.append(listEntry)
+        })
+
+        td.append(list)
+        row.append(td)
+      }
+    } else if (k === 'name') {
+
     } else {
       // Append text for other info
       row.append($('<td>' + k + ': ' + v + '</td>'))
