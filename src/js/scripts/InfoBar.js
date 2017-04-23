@@ -25,16 +25,17 @@ module.exports = function leftInfoBar (data) {
 
     // Create a dropdown containing all the hash ranges selected node is associated with
     if (k === 'hash' && v.length !== 0) {
-      var hashList = $('<select> </select>')
+      if (v.lower != null && v.upper != null) {
+        var hashList = $('<select> </select>')
+        v.forEach(function (range) {
+          var listEntry = $('<option>' + range.lower.toString() + ' - ' + range.upper.toString() + ' </option>')
+          hashList.append(listEntry)
+        })
 
-      v.forEach(function (range) {
-        var listEntry = $('<option>' + range.lower.toString() + ' - ' + range.upper.toString() + ' </option>')
-        hashList.append(listEntry)
-      })
-
-      var td = $('<td id=\'hashRow\'>' + k + ': ' + '</td>')
-      td.append(hashList)
-      row.append(td)
+        var td = $('<td id=\'hashRow\'>' + k + ': ' + '</td>')
+        td.append(hashList)
+        row.append(td)
+      }
     } else if (k === 'slaves' && data.role.toUpperCase() === 'MASTER') {
       // Append the drop down of associated slave nodes for a master
       var td = $('<td id =\'slavesList\'>' + k + ': ' + '</td>')
