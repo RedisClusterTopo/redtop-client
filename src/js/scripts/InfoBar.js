@@ -4,7 +4,6 @@ module.exports = function leftInfoBar (data) {
   if (data.type.toUpperCase() === 'SUBNET' || data.type.toUpperCase() === 'EC2 INSTANCE' || data.type.toUpperCase() === 'AVAILABILITY ZONE') return
   side.empty()
 
-  console.log(data)
   // Side bar is hidden if true
   if ($('#wrapper').hasClass('leftMenuOff')) $('#wrapper').toggleClass('leftMenuOff')
 
@@ -41,7 +40,7 @@ module.exports = function leftInfoBar (data) {
       var td = $('<td id =\'slavesList\'>' + k + ': ' + '</td>')
       var slavesList = $('<select></select>')
       $.each(v, function (index, repNode) {
-        var listEntry = $('<option>' + "ID " + ' : ' + v + '</option>')
+        var listEntry = $('<option>' + 'ID ' + ' : ' + v + '</option>')
 
         slavesList.append(listEntry)
       })
@@ -147,7 +146,7 @@ module.exports = function leftInfoBar (data) {
 
   // Button/link for closing the side bar
   side.append($('<div style=\'text-align:center\' id=\'btnContainer\'>'))
-  $('#btnContainer').append($('<input type=\'button\' id=\'leftMenuBtn\' value=\'Close\'/>'))
+  $('#btnContainer').append($('<input type=\'button\' id=\'leftMenuBtn\' hidden value=\'Close\'/>'))
   side.append($('<a href=\'#leftMenuToggle\' class=\'btn btn-default\' id=\'leftMenuToggle\' hidden>Toggle Menu</a>'))
 
   $('#leftMenuBtn').click(function (e) {
