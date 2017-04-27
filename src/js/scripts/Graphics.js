@@ -109,7 +109,9 @@ module.exports = class Graphics {
     .attr('transform', function (d) {
       return 'translate(' + d.x + ',' + d.y + ')'
     })
-      .on('click', function () { _this.selectNode(this, d3.select(this).datum().data, clusterState) })
+    .on('click', function (a, b) {
+      _this.selectNode(this, d3.select(this).datum().data, clusterState)
+    })
   }
 
   // Append a graphics object for each node
@@ -119,7 +121,6 @@ module.exports = class Graphics {
     // For each node in the topology add the corresponding icon according to node's type
     _this.node._groups[0].forEach(function (n) {
       switch (d3.select(n).datum().data.type) {
-
         case 'Availability Zone':
           d3.select(n).append('g')
             .attr('transform', 'scale(.5, .5) translate(-45, -20)')
@@ -187,6 +188,7 @@ module.exports = class Graphics {
 
   styleNodeViaState (g, nodeData, cb) {
     var _this = this
+    if (nodeData.type.toUpperCase() === 'CLUSTER NODE') {
       if (nodeData.state.toUpperCase() === 'FAIL') {
         g.style.stroke = '#ff0000'
         g.style.fill = '#ff8080'
@@ -197,13 +199,16 @@ module.exports = class Graphics {
         if (_this.clusterState.stateErrors.noExternalReplication.includes(nodeData.id)) {
           g.style.stroke = '#ffff66'
           g.style.fill = '#ffff00'
-        }
-        else {
+        } else {
           g.style.stroke = '#1aff66'
           g.style.fill = '#00802b'
         }
       }
-    cb()
+    } else {
+      g.style.stroke = '#6B6B47'
+      g.style.fill = '#999966'
+    }
+    if (cb) cb()
   }
 
   // Append text to d3 nodes using the "name" field of its associated data
@@ -220,30 +225,29 @@ module.exports = class Graphics {
 
   // Triggered when clicking a topology node
   // TOGGLES sidebar expansion and coloring of focused nodes
-  selectNode (node, nodeData, clusterState) {
+  selectNode (node, nodeData) {
+    var _this = this
     // Don't select cluster root
-    if (nodeData.name === 'Cluster Root') return
-    if (nodeData.type.toUpperCase() === 'EC2 INSTANCE' || nodeData.type.toUpperCase() === 'SUBNET' || nodeData.type.toUpperCase() === 'AVAILABILITY ZONES') return
+    if (nodeData.name.toUpperCase() === 'CLUSTER ROOT') return
     var same = false // Determines whether the clicked node is already selected
     this._removeFocus() // Always remove colors from previously focused node(s)
 
-    // Check if the node is already selected
-    // TODO: Change the ID fields of redtop components to be the same (some use x.id while others use x.name)
-    if (nodeData.type.toUpperCase() === 'CLUSTER NODE') {
-      if (this.state.focus.node === nodeData.id) {
-        same = true
-      } else {
-        this.state.focus.node = nodeData.id
-      }
-    } else {
+    if (nodeData.type.toUpperCase() === 'EC2 INSTANCE' || nodeData.type.toUpperCase() === 'SUBNET' || nodeData.type.toUpperCase() === 'AVAILABILITY ZONE') {
+      this.state.focus.replication = []
       if (this.state.focus.node === nodeData.name) {
         same = true
       } else {
         this.state.focus.node = nodeData.name
       }
+    } else {
+      if (this.state.focus.node === nodeData.id) {
+        same = true
+      } else {
+        this.state.focus.node = nodeData.id
+      }
     }
 
-    leftInfoBar(nodeData) // Display left side bar
+    leftInfoBar(nodeData, _this) // Display left side bar
     this._setFocus(this.state.focus.node)  // Handle highlighting of selected node
 
     if (same) {
@@ -257,29 +261,32 @@ module.exports = class Graphics {
   // Changes the color of the selected node, as well as its associated master or slaves
   _setFocus (node) {
     var _this = this
-    this._removeFocus()
+    // this._removeFocus()
     _this._selectD3NodeById(node, function (g, nodeData) {
       _this.styleNodeViaState(g, nodeData, function () {
         g.style.stroke = 'red'
 
-      // Change color of associated nodes to orange
-      if (nodeData.replicates) {
-        _this._selectD3NodeById(nodeData.replicates, function (g, nodeData2) {
-          _this.state.focus.replication.push(nodeData.replicates.toString())
-          _this.styleNodeViaState(g, nodeData2, function () {
-            g.style.stroke = '#000000'
-          })
-        })
-      } else if (nodeData.slaves.length > 0) {
-        nodeData.slaves.forEach(function (replicationId) {
-          _this.state.focus.replication.push(replicationId)
-          _this._selectD3NodeById(replicationId, function (g, nodeData) {
-            _this.styleNodeViaState(g, nodeData, function () {
+        // skip replication highlighting for non-cluster nodes
+        if (nodeData.type.toUpperCase() !== 'CLUSTER NODE') return
+
+        // Change color of associated nodes to orange
+        if (nodeData.replicates) {
+          _this._selectD3NodeById(nodeData.replicates, function (g, nodeData2) {
+            _this.state.focus.replication.push(nodeData.replicates.toString())
+            _this.styleNodeViaState(g, nodeData2, function () {
               g.style.stroke = '#000000'
             })
           })
-        })
-      }
+        } else if (nodeData.slaves.length > 0) {
+          nodeData.slaves.forEach(function (replicationId) {
+            _this.state.focus.replication.push(replicationId)
+            _this._selectD3NodeById(replicationId, function (g, nodeData) {
+              _this.styleNodeViaState(g, nodeData, function () {
+                g.style.stroke = '#000000'
+              })
+            })
+          })
+        }
       })
     })
   }
@@ -290,20 +297,15 @@ module.exports = class Graphics {
 
     // Revert main node
     // TODO handle selecting nodes vs the rest of the cluster
-
     this._selectD3NodeById(_this.state.focus.node, function (g, nodeData) {
-       _this.styleNodeViaState (g, nodeData, function(){
-
-       })
+       _this.styleNodeViaState (g, nodeData, null)
     })
 
     // Revert associated nodes if present
     if (this.state.focus.replication.length > 0) {
       this.state.focus.replication.forEach(function (assocNode) {
         _this._selectD3NodeById(assocNode, function (g, nodeData) {
-          _this.styleNodeViaState (g, nodeData, function(){
-
-          })
+          _this.styleNodeViaState (g, nodeData, null)
         })
       })
     }
@@ -313,12 +315,15 @@ module.exports = class Graphics {
   // Returns: the graphics object associated with the given ID and the nodes' corresponding
   //    data object
   _selectD3NodeById (nodeId, cb) {
+    var returned = false
     this.node._groups[0].forEach(function (g) {
+      if (returned) return
       var n = d3.select(g)
-
       if (n.datum().data.id === nodeId) {
+        returned = true
         cb(n._groups[0][0].firstChild, n.datum().data)
       } else if (n.datum().data.name === nodeId) {
+        returned = true
         cb(n._groups[0][0].firstChild.firstChild, n.datum().data)
       }
     })

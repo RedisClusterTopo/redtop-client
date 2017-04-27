@@ -1,26 +1,35 @@
-var d3 = require('d3')
-module.exports = function leftInfoBar (data) {
+module.exports = function leftInfoBar (data, graphics) {
   var side = $('#sidebar-wrapper')
-  if (data.type.toUpperCase() === 'SUBNET' || data.type.toUpperCase() === 'EC2 INSTANCE' || data.type.toUpperCase() === 'AVAILABILITY ZONE') return
-  side.empty()
+  // if (data.type.toUpperCase() === 'SUBNET' || data.type.toUpperCase() === 'EC2 INSTANCE' || data.type.toUpperCase() === 'AVAILABILITY ZONE') return
 
   // Side bar is hidden if true
   if ($('#wrapper').hasClass('leftMenuOff')) $('#wrapper').toggleClass('leftMenuOff')
+
+  side.empty()
 
   // Set the sidebar header
   var header = $('<h2></h2>')
   header.text(data.name)
   side.append(header)
 
-  var infoTable = $('<table></table>') // Holds entries to the side panel
+  // Has 2 colums for the selected object's field key/values
+  var infoTable = $('<table></table>')
+
+  var nodeID
+  if (data.type.toUpperCase() !== 'CLUSTER NODE') nodeID = data.name
+  else nodeID = data.id
 
   // Iterate through node data and create table entry for relevant attributes
   $.each(data, function (k, v) {
-    if (k === 'children') return
     var row = $('<tr></tr>')
 
-    if (k === 'replicates' && data.role.toUpperCase() === 'SLAVE') {
-    }
+    // Don't do anything with child nodes
+    if (k === 'children') return
+
+    // ClusterNodes always have the 'replicates' and 'slaves' list
+    // Need to skip 'replicates' for masters and 'slaves' list for slaves
+    if (k === 'replicates' && data.role.toUpperCase() === 'MASTER') return
+    if (k === 'slaves' && data.role.toUpperCase() === 'SLAVE') return
 
     // Create a dropdown containing all the hash ranges selected node is associated with
     if (k === 'hash' && v.length !== 0) {
@@ -39,6 +48,13 @@ module.exports = function leftInfoBar (data) {
       // Append the drop down of associated slave nodes for a master
       var td = $('<td id =\'slavesList\'>' + k + ': ' + '</td>')
       var slavesList = $('<select></select>')
+      slavesList.on('mouseenter', 'option', function (e) {
+        console.log(this)
+      })
+      slavesList.on('mouseleave', 'option', function (e) {
+        console.log(this)
+      })
+
       $.each(v, function (index, repNode) {
         var listEntry = $('<option>' + 'ID ' + ' : ' + v + '</option>')
 
@@ -146,14 +162,15 @@ module.exports = function leftInfoBar (data) {
 
   // Button/link for closing the side bar
   side.append($('<div style=\'text-align:center\' id=\'btnContainer\'>'))
-  $('#btnContainer').append($('<input type=\'button\' id=\'leftMenuBtn\' hidden value=\'Close\'/>'))
+  $('#btnContainer').append($('<input type=\'button\' id=\'leftMenuBtn\' value=\'Close\'/>'))
   side.append($('<a href=\'#leftMenuToggle\' class=\'btn btn-default\' id=\'leftMenuToggle\' hidden>Toggle Menu</a>'))
 
   $('#leftMenuBtn').click(function (e) {
     $('#leftMenuToggle').click()
     e.preventDefault()
     $('#wrapper').toggleClass('leftMenuOff')
-    // removeFocus()
+    graphics._removeFocus()
+    graphics.state.focus = {node: null, replication: []}
   })
 
   function buildSplitBrainInfo(sbData, cb)
